@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>云己 - 意识上传平台预览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 0;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #00a0ff 0%, #0057ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            font-size: 18px;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .preview-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+
+        .preview-card {
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .preview-image {
+            width: 100%;
+            height: 600px;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-image iframe {
+            width: 375px;
+            height: 100%;
+            border: none;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+        }
+
+        .preview-content {
+            padding: 24px;
+        }
+
+        .preview-content h3 {
+            font-size: 24px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .preview-content p {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 12px;
+            padding-left: 24px;
+            position: relative;
+        }
+
+        .feature-list li::before {
+            content: "•";
+            color: #00a0ff;
+            position: absolute;
+            left: 0;
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .design-section {
+            background: #fff;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .design-section h2 {
+            font-size: 28px;
+            margin-bottom: 24px;
+            color: #333;
+        }
+
+        .design-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .design-item {
+            padding: 24px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .design-item h4 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .design-item p {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        .color-palette {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .color-item {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .color-item::after {
+            content: attr(data-color);
+            position: absolute;
+            bottom: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 16px;
+            }
+
+            .header {
+                padding: 24px 16px;
+            }
+
+            .header h1 {
+                font-size: 28px;
+            }
+
+            .header p {
+                font-size: 16px;
+            }
+
+            .preview-image {
+                height: 500px;
+            }
+
+            .design-section {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>云己 - 意识上传平台</h1>
+            <p>基于梦蝶心智模型的数字意识生成与永生平台</p>
+        </header>
+
+        <section class="preview-section">
+            <div class="preview-card">
+                <div class="preview-image">
+                    <iframe src="http://localhost:8080/#/pages/welcome/index" frameborder="0"></iframe>
+                </div>
+                <div class="preview-content">
+                    <h3>欢迎页面</h3>
+                    <p>简洁大方的欢迎页面，展现产品核心价值主张</p>
+                    <ul class="feature-list">
+                        <li>渐变背景营造科技感</li>
+                        <li>简洁有力的标题传达产品定位</li>
+                        <li>清晰的行动按钮引导用户</li>
+                        <li>响应式设计适配多种设备</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="preview-card">
+                <div class="preview-image">
+                    <iframe src="http://localhost:8080/#/pages/auth/login" frameborder="0"></iframe>
+                </div>
+                <div class="preview-content">
+                    <h3>登录注册页面</h3>
+                    <p>安全可靠的用户认证系统</p>
+                    <ul class="feature-list">
+                        <li>简洁的表单设计</li>
+                        <li>实时的表单验证</li>
+                        <li>友好的错误提示</li>
+                        <li>支持第三方登录</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="preview-card">
+                <div class="preview-image">
+                    <iframe src="http://localhost:8080/#/pages/upload/index" frameborder="0"></iframe>
+                </div>
+                <div class="preview-content">
+                    <h3>数据上传页面</h3>
+                    <p>直观的数据上传与进度展示</p>
+                    <ul class="feature-list">
+                        <li>分类清晰的上传入口</li>
+                        <li>实时的上传进度展示</li>
+                        <li>文件大小和类型验证</li>
+                        <li>支持批量上传和断点续传</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="design-section">
+            <h2>设计系统</h2>
+            <div class="design-grid">
+                <div class="design-item">
+                    <h4>色彩系统</h4>
+                    <div class="color-palette">
+                        <div class="color-item" style="background: #00a0ff;" data-color="#00a0ff"></div>
+                        <div class="color-item" style="background: #0057ff;" data-color="#0057ff"></div>
+                        <div class="color-item" style="background: #000000;" data-color="#000000"></div>
+                        <div class="color-item" style="background: #ffffff;" data-color="#ffffff"></div>
+                    </div>
+                    <p>采用深邃的黑色和渐变蓝色，营造科技感和未来感，白色作为点缀提升可读性。</p>
+                </div>
+
+                <div class="design-item">
+                    <h4>字体系统</h4>
+                    <p>主标题：48rpx, 粗体</p>
+                    <p>副标题：32rpx, 中等</p>
+                    <p>正文：28rpx, 常规</p>
+                    <p>说明文字：24rpx, 常规</p>
+                </div>
+
+                <div class="design-item">
+                    <h4>间距系统</h4>
+                    <p>页面边距：40rpx</p>
+                    <p>组件间距：32rpx</p>
+                    <p>内部间距：24rpx</p>
+                    <p>文本间距：16rpx</p>
+                </div>
+
+                <div class="design-item">
+                    <h4>圆角系统</h4>
+                    <p>大圆角：48rpx（按钮）</p>
+                    <p>中圆角：24rpx（卡片）</p>
+                    <p>小圆角：16rpx（输入框）</p>
+                    <p>微圆角：8rpx（进度条）</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html> 
