@@ -74,6 +74,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import authManager from '@/utils/auth.js'
 
 const form = ref({
   username: '',
@@ -159,11 +160,34 @@ const handleRegister = () => {
       birth: null, 
       password: form.value.password
     },
-    success: (res) => {
+    success: async (res) => {
       if (res.data.code === 200) {
         uni.showToast({ title: '注册成功', icon: 'success' })
-        getApp().globalData.user_id = res.data.data.user_id
-        uni.navigateTo({ url: '/pages/upload/minddata' })
+
+        // 注册成功后直接使用返回的token
+        const userData = res.data.data
+        const token = userData.token
+
+        if (token) {
+          // 保存token到本地存储
+          authManager.saveTokenToStorage(token)
+
+          // 设置全局用户ID（兼容旧代码）
+          getApp().globalData.user_id = userData.user_id
+
+          // 新注册用户跳转到上传页面
+          uni.navigateTo({ url: '/pages/upload/minddata' })
+        } else {
+          // 没有返回token，提示用户手动登录
+          uni.showModal({
+            title: '注册成功',
+            content: '请返回登录页面使用新账号登录',
+            showCancel: false,
+            success: () => {
+              uni.navigateTo({ url: '/pages/auth/login' })
+            }
+          })
+        }
       } else {
         // 处理验证错误
         let errorMessage = res.data.message || '注册失败'

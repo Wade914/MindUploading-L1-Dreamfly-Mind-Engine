@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.session import get_db
 from core.response import success
+from core.auth_middleware import get_current_user_id
 from typing import Optional
 
 from .params import CreateMindParams, ListMindParams
@@ -19,12 +20,12 @@ router = APIRouter()
 @router.post("/mind", summary="创建意识体")
 async def create_mind(
     params: CreateMindParams,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user_id: str = Depends(get_current_user_id)
 ) -> dict:
     """
     创建意识体
-    
-    - **user_id**: 用户ID
+
     - **name**: 意识体名称
     - **birth**: 生日（可选）
     - **mind_content**: 意识体内容
@@ -32,6 +33,8 @@ async def create_mind(
     - **protocol**: 协议（可选，默认MCP-v1）
     - **blockchain**: 区块链（可选，默认ethereum）
     """
+    # 使用JWT中的用户ID，覆盖参数中的user_id
+    params.user_id = current_user_id
     service = MindService(db)
     result = await service.create_mind(params)
     return success(data=result.model_dump(), msg="意识体创建成功")
@@ -51,10 +54,10 @@ async def get_mind_filenames(
 
 @router.get("/minds", summary="获取意识体列表")
 async def get_mind_list(
-    user_id: Optional[str] = Query(None, description="用户ID"),
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(10, ge=1, le=100, description="每页数量"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user_id: str = Depends(get_current_user_id)
 ) -> dict:
     """
     获取意识体列表（分页）
@@ -63,7 +66,7 @@ async def get_mind_list(
     - **page**: 页码
     - **page_size**: 每页数量
     """
-    params = ListMindParams(user_id=user_id, page=page, page_size=page_size)
+    params = ListMindParams(user_id=current_user_id, page=page, page_size=page_size)
     service = MindService(db)
     result = await service.get_mind_list(params)
     return success(data=result.model_dump(), msg="获取成功")

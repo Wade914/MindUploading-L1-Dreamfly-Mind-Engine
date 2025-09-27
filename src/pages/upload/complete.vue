@@ -199,32 +199,25 @@ export default {
         const fileName = `${uploadData.name}.mind`
         
         // === 新增：保存到后端 ===
-        const user_id = getApp().globalData.user_id || ''
-        await new Promise((resolve, reject) => {
-          uni.request({
-            url: '/api/mind',
-            method: 'POST',
-            data: {
-              user_id,
-              name: uploadData.name,
-              birth: uploadData.birth,
-              mind_content: fileContent
-            },
-            success: (res) => {
-              if (res.data.code === 200) {
-                console.log('Mind文件已保存到后端', res.data.data)
-                resolve()
-              } else {
-                uni.showToast({ title: '后端保存失败', icon: 'none' })
-                reject()
-              }
-            },
-            fail: () => {
-              uni.showToast({ title: '后端网络错误', icon: 'none' })
-              reject()
-            }
+        const { post } = await import('@/utils/request.js')
+        try {
+          const response = await post('/api/mind', {
+            name: uploadData.name,
+            birth: uploadData.birth,
+            mind_content: fileContent
           })
-        })
+
+          if (response && response.data && response.data.code === 200) {
+            console.log('Mind文件已保存到后端', response.data.data)
+          } else {
+            uni.showToast({ title: '后端保存失败', icon: 'none' })
+            throw new Error('保存失败')
+          }
+        } catch (error) {
+          console.error('保存到后端失败:', error)
+          uni.showToast({ title: '后端保存失败', icon: 'none' })
+          throw error
+        }
         // === 新增结束 ===
 
         // 创建Blob对象

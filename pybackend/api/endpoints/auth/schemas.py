@@ -38,3 +38,4 @@ class RegisterResponseSchema(BaseModel):
     email: str
     birth: Optional[str] = None
     register_time: datetime
+    token: Optional[str] = None

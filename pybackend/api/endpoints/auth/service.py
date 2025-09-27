@@ -6,10 +6,12 @@
 
 import hashlib
 import secrets
+from datetime import timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import HTTPException, status
 from core.exception import UnicornException
+from core.jwt_auth import jwt_manager
 
 from .models import User
 from .params import RegisterParams, LoginParams
@@ -74,12 +76,21 @@ class AuthService:
         await self.db.flush()  # 获取生成的ID
         await self.db.refresh(user)
 
+        # 生成JWT token
+        token_data = {
+            "user_id": user.id,
+            "username": user.username,
+            "email": user.email
+        }
+        access_token = jwt_manager.create_access_token(data=token_data)
+
         return RegisterResponseSchema(
             user_id=user.id,
             username=user.username,
             email=user.email,
             birth=user.birth,
-            register_time=user.created_at
+            register_time=user.created_at,
+            token=access_token
         )
 
     async def login_user(self, params: LoginParams) -> LoginResponseSchema:
@@ -111,10 +122,20 @@ class AuthService:
             raise UnicornException(code=401, errmsg="密码错误")
 
         print(f"✅ 登录成功: {user.username}")
+
+        # 生成JWT token
+        token_data = {
+            "user_id": user.id,
+            "username": user.username,
+            "email": user.email
+        }
+        access_token = jwt_manager.create_access_token(data=token_data)
+
         return LoginResponseSchema(
             user_id=user.id,
             username=user.username,
             email=user.email,
             birth=user.birth,
-            register_time=user.created_at
+            register_time=user.created_at,
+            token=access_token
         )

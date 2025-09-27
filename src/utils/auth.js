@@ -9,34 +9,50 @@ class AuthManager {
   constructor() {
     this.currentUser = null
     this.token = null
-    this.loadUserFromStorage()
+    this.loadTokenFromStorage()
   }
 
-  // 从本地存储加载用户信息
-  loadUserFromStorage() {
+  // 从本地存储加载token
+  loadTokenFromStorage() {
     try {
-      const userStr = uni.getStorageSync('user_info')
       const token = uni.getStorageSync('auth_token')
-      
-      if (userStr && token) {
-        this.currentUser = JSON.parse(userStr)
+
+      if (token) {
         this.token = token
+        // 从token中解析用户信息（不存储在本地）
+        this.parseUserFromToken(token)
       }
     } catch (error) {
-      console.error('加载用户信息失败:', error)
+      console.error('加载token失败:', error)
       this.clearUserInfo()
     }
   }
 
-  // 保存用户信息到本地存储
-  saveUserToStorage(userInfo, token) {
+  // 从JWT token中解析用户信息
+  parseUserFromToken(token) {
     try {
-      uni.setStorageSync('user_info', JSON.stringify(userInfo))
-      uni.setStorageSync('auth_token', token)
-      this.currentUser = userInfo
-      this.token = token
+      // 简单的JWT解析（仅用于获取用户信息，不验证签名）
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      this.currentUser = {
+        user_id: payload.user_id,
+        username: payload.username,
+        email: payload.email
+      }
     } catch (error) {
-      console.error('保存用户信息失败:', error)
+      console.error('解析token失败:', error)
+      this.clearUserInfo()
+    }
+  }
+
+  // 保存token到本地存储
+  saveTokenToStorage(token) {
+    try {
+      uni.setStorageSync('auth_token', token)
+      this.token = token
+      // 从token中解析用户信息
+      this.parseUserFromToken(token)
+    } catch (error) {
+      console.error('保存token失败:', error)
     }
   }
 
@@ -45,7 +61,6 @@ class AuthManager {
     this.currentUser = null
     this.token = null
     try {
-      uni.removeStorageSync('user_info')
       uni.removeStorageSync('auth_token')
     } catch (error) {
       console.error('清除用户信息失败:', error)
@@ -75,6 +90,7 @@ class AuthManager {
   // 登录
   async login(email, password) {
     return new Promise((resolve) => {
+      // 登录请求不需要token，直接使用uni.request
       uni.request({
         url: 'http://localhost:8000/api/login',
         method: 'POST',
@@ -89,14 +105,20 @@ class AuthManager {
           console.log('登录响应:', response)
           if (response.data.code === 200) {
             const userData = response.data.data
-            // 生成简单的token（实际项目中应该由后端提供）
-            const token = `token_${userData.user_id}_${Date.now()}`
+            const token = userData.token
 
-            this.saveUserToStorage(userData, token)
-            resolve({
-              success: true,
-              data: userData
-            })
+            if (token) {
+              this.saveTokenToStorage(token)
+              resolve({
+                success: true,
+                data: userData
+              })
+            } else {
+              resolve({
+                success: false,
+                message: '服务器未返回有效token'
+              })
+            }
           } else {
             resolve({
               success: false,
@@ -125,6 +147,7 @@ class AuthManager {
     }
 
     return new Promise((resolve) => {
+      // 注册请求不需要token，直接使用uni.request
       uni.request({
         url: 'http://localhost:8000/api/register',
         method: 'POST',

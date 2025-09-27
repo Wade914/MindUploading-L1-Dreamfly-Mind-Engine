@@ -12,11 +12,17 @@
     ></video>
     
     <!-- 内容遮罩 -->
-    <scroll-view 
-      class="content-overlay" 
+    <scroll-view
+      class="content-overlay"
       scroll-y="true"
       :scroll-with-animation="true"
     >
+      <!-- 返回按钮 -->
+      <view class="back-button" @click="goBack">
+        <text class="back-icon">←</text>
+        <text class="back-text">返回</text>
+      </view>
+
       <!-- 标题区域 -->
       <view class="title-section">
         <text class="main-title">探索数字生命</text>
@@ -56,11 +62,7 @@
           </view>
         </view>
         
-        <!-- 调试信息区域 -->
-        <view v-if="debugInfo" class="debug-info">
-          <text class="debug-title">调试信息:</text>
-          <text class="debug-text">{{ debugInfo }}</text>
-        </view>
+
         
         <!-- 状态显示 -->
         <view class="status-section">
@@ -159,6 +161,9 @@
 </template>
 
 <script>
+import authManager from '@/utils/auth.js'
+import { get } from '@/utils/request.js'
+
 export default {
   data() {
     return {
@@ -170,12 +175,11 @@ export default {
       isLoading: false,
       loadingProgress: 0,
       loadingText: '',
-      debugInfo: '',
       mindContent: null,
       targetDir: '/pages/consciousness/interaction'
     }
   },
-  mounted() {
+  async mounted() {
     // 添加全局拖拽事件监听
     const dropZone = document.querySelector('.drop-zone')
     if (dropZone) {
@@ -184,6 +188,9 @@ export default {
       dropZone.addEventListener('dragleave', this.handleDragLeave)
       dropZone.addEventListener('drop', this.handleDrop)
     }
+
+    // 自动加载当前用户的mind文件
+    await this.loadUserMindFile()
   },
   beforeDestroy() {
     // 移除全局拖拽事件监听
@@ -429,19 +436,68 @@ export default {
         name: mindId + '.mind'
       };
       this.canStart = true;
-      
+
       // 显示加载提示
       uni.showToast({
         title: '意识体加载成功',
         icon: 'success',
         duration: 2000
       });
-      
+
       // 自动滚动到顶部的引擎控制区
       uni.pageScrollTo({
         scrollTop: 0,
         duration: 300
       });
+    },
+
+    // 返回按钮点击事件
+    goBack() {
+      // 使用 reLaunch 确保能正确跳转到意识首页
+      uni.reLaunch({
+        url: '/pages/consciousness/index'
+      })
+    },
+
+    // 自动加载当前用户的mind文件
+    async loadUserMindFile() {
+      try {
+        const userInfo = authManager.getCurrentUser()
+        if (!userInfo) {
+          console.log('用户未登录，跳过自动加载mind文件')
+          return
+        }
+
+        // 使用新的请求工具调用后端API
+        const response = await get('/api/minds', {
+          page: 1,
+          page_size: 10
+        })
+
+        if (response && response.data && response.data.code === 200) {
+          const mindData = response.data.data
+
+          if (mindData.items && mindData.items.length > 0) {
+            // 取第一个mind记录（用户的意识体）
+            const userMind = mindData.items[0]
+            const filename = userMind.filename
+
+            // 自动设置用户的mind文件
+            this.selectedFile = {
+              name: filename
+            }
+            this.canStart = true
+
+            console.log('自动加载用户mind文件成功:', filename, userMind)
+          } else {
+            console.log('用户还没有创建意识体文件')
+          }
+        } else {
+          console.warn('查询用户mind文件失败:', response?.data)
+        }
+      } catch (error) {
+        console.warn('自动加载用户mind文件失败:', error)
+      }
     }
   }
 }
@@ -474,7 +530,40 @@ export default {
       rgba(0, 0, 0, 0.8),
       rgba(0, 0, 0, 0.6)
     );
-    
+
+    .back-button {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.8);
+        border-color: rgba(171, 130, 255, 0.4);
+        transform: translateX(-2px);
+      }
+
+      .back-icon {
+        font-size: 18px;
+        color: $text-white;
+      }
+
+      .back-text {
+        font-size: 14px;
+        color: $text-white;
+      }
+    }
+
     .title-section {
       text-align: center;
       margin-bottom: 40px;
@@ -831,28 +920,7 @@ export default {
   }
 }
 
-.debug-info {
-  margin-top: 20px;
-  padding: 15px;
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 8px;
-  border: 1px solid rgba(171, 130, 255, 0.2);
-  
-  .debug-title {
-    color: #0f0;
-    font-size: 14px;
-    margin-bottom: 8px;
-    display: block;
-  }
-  
-  .debug-text {
-    color: #fff;
-    font-size: 12px;
-    font-family: monospace;
-    white-space: pre-wrap;
-    display: block;
-  }
-}
+
 
 .file-input {
   position: absolute;
