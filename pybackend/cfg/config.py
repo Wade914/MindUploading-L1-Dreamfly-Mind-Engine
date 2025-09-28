@@ -6,6 +6,7 @@
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
+import os
 
 
 class Settings(BaseSettings):
@@ -24,18 +25,31 @@ class Settings(BaseSettings):
 
     # 数据库配置
     DATABASE_URL: str = ""
+    DATABASE_DIR: str = "./pybackend/database"
 
-    # 文件上传配置
-    UPLOAD_DIR: str = ""
+    # 目录配置
+    UPLOAD_DIR: str = "./pybackend/uploads"
+    MINDS_DIR: str = "./pybackend/database/minds"
+    LOG_DIR: str = "./pybackend/logs"
+
+    # 上传子目录配置
+    UPLOAD_THOUGHT_DIR: str = "thought"
+    UPLOAD_VOICE_DIR: str = "voice"
+    UPLOAD_IMAGE_DIR: str = "image"
+    UPLOAD_DOCUMENT_DIR: str = "documents"
+
+    # 文件大小限制配置
     MAX_FILE_SIZE: int = 20971520  # 20MB
+    MAX_THOUGHT_SIZE: int = 5242880  # 5MB
+    MAX_VOICE_SIZE: int = 10485760  # 10MB
+    MAX_IMAGE_SIZE: int = 20971520  # 20MB
+    MAX_DOCUMENT_SIZE: int = 10485760  # 10MB
 
     # 允许的文件类型
     ALLOWED_THOUGHT_TYPES: list = ['.txt', '.md', '.doc', '.docx', '.pdf']
     ALLOWED_VOICE_TYPES: list = ['.mp3', '.wav', '.m4a', '.aac']
     ALLOWED_IMAGE_TYPES: list = ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
-
-    # 意识体数据目录
-    MINDS_DIR: str = ""
+    ALLOWED_DOCUMENT_TYPES: list = ['.txt', '.pdf', '.doc', '.docx', '.md']
 
     # CORS配置
     CORS_ORIGINS: list = ["*"]

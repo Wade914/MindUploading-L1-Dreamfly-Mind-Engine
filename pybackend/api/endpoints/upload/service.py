@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from fastapi import UploadFile, HTTPException
 from core.exception import UnicornException
+from core.path_manager import get_path_manager
 
 from .models import Upload
 from .params import UploadParams, GetUploadListParams, UploadType
@@ -19,49 +20,31 @@ from .schemas import UploadResponseSchema, UploadListResponseSchema, UploadSchem
 
 class UploadService:
     """文件上传服务"""
-    
-    # 文件大小限制（字节）
-    SIZE_LIMITS = {
-        UploadType.THOUGHT: 5 * 1024 * 1024,   # 5MB
-        UploadType.VOICE: 10 * 1024 * 1024,    # 10MB  
-        UploadType.IMAGE: 20 * 1024 * 1024     # 20MB
-    }
-    
-    # 允许的文件类型
-    ALLOWED_TYPES = {
-        UploadType.THOUGHT: ['.txt', '.md', '.doc', '.docx', '.pdf'],
-        UploadType.VOICE: ['.mp3', '.wav', '.m4a', '.aac'],
-        UploadType.IMAGE: ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
-    }
-    
+
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.upload_dir = os.path.join(os.path.dirname(__file__), "../../../../uploads")
-        # 确保上传目录存在
-        os.makedirs(self.upload_dir, exist_ok=True)
-        
-        # 创建子目录
-        for upload_type in UploadType:
-            type_dir = os.path.join(self.upload_dir, upload_type.value)
-            os.makedirs(type_dir, exist_ok=True)
+        self.path_manager = get_path_manager()
+        # 目录已经在path_manager初始化时创建
 
     def _validate_file(self, file: UploadFile, upload_type: UploadType) -> None:
         """验证文件"""
         # 检查文件大小
+        size_limit = self.path_manager.get_file_size_limit(upload_type.value)
         if hasattr(file, 'size') and file.size:
-            if file.size > self.SIZE_LIMITS[upload_type]:
-                raise UnicornException(
-                    code=400, 
-                    errmsg=f"文件大小超过限制({self.SIZE_LIMITS[upload_type] // (1024*1024)}MB)"
-                )
-        
-        # 检查文件类型
-        if file.filename:
-            file_ext = os.path.splitext(file.filename)[1].lower()
-            if file_ext not in self.ALLOWED_TYPES[upload_type]:
+            if file.size > size_limit:
                 raise UnicornException(
                     code=400,
-                    errmsg=f"不支持的文件类型，支持: {', '.join(self.ALLOWED_TYPES[upload_type])}"
+                    errmsg=f"文件大小超过限制({size_limit // (1024*1024)}MB)"
+                )
+
+        # 检查文件类型
+        allowed_types = self.path_manager.get_allowed_types(upload_type.value)
+        if file.filename:
+            file_ext = os.path.splitext(file.filename)[1].lower()
+            if file_ext not in allowed_types:
+                raise UnicornException(
+                    code=400,
+                    errmsg=f"不支持的文件类型，支持: {', '.join(allowed_types)}"
                 )
 
     def _generate_filename(self, original_filename: str) -> str:
@@ -83,24 +66,24 @@ class UploadService:
         saved_filename = self._generate_filename(file.filename)
         
         # 确定保存路径
-        type_dir = os.path.join(self.upload_dir, params.upload_type.value)
-        file_path = os.path.join(type_dir, saved_filename)
+        type_dir = self.path_manager.get_upload_dir(params.upload_type.value)
+        file_path = type_dir / saved_filename
         
         # 保存文件
         try:
-            with open(file_path, "wb") as buffer:
+            with open(str(file_path), "wb") as buffer:
                 content = await file.read()
                 buffer.write(content)
                 file_size = len(content)
         except Exception as e:
             raise UnicornException(code=500, errmsg=f"文件保存失败: {str(e)}")
-        
+
         # 记录到数据库
         upload_record = Upload(
             user_id=params.user_id,
             original_filename=file.filename,
             saved_filename=saved_filename,
-            file_path=file_path,
+            file_path=str(file_path),
             file_type=file.content_type,
             file_size=file_size,
             upload_type=params.upload_type.value

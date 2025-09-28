@@ -14,18 +14,16 @@ from typing import Optional
 
 from database.session import get_db
 from core.response import success, fail
+from core.path_manager import get_path_manager
 from .models import UpdateDocumentRequest, CreateTransactionRequest
 from .service import DocumentService, TransactionService
 
 router = APIRouter(prefix="/api/user", tags=["文档管理"])
 
-# 文件上传配置
-UPLOAD_DIR = "uploads/documents"
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
-ALLOWED_EXTENSIONS = {".txt", ".pdf", ".doc", ".docx", ".md"}
+# 获取路径管理器
+path_manager = get_path_manager()
 
-# 确保上传目录存在
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+# 目录已经在path_manager初始化时创建
 
 
 @router.get("/documents", response_model=dict)
@@ -51,21 +49,24 @@ async def upload_document(
     try:
         # 验证文件扩展名
         file_ext = os.path.splitext(file.filename)[1].lower()
-        if file_ext not in ALLOWED_EXTENSIONS:
+        allowed_types = path_manager.get_allowed_types('document')
+        if file_ext not in allowed_types:
             return fail(msg=f"不支持的文件类型: {file_ext}")
-        
+
         # 验证文件大小
         file_content = await file.read()
-        if len(file_content) > MAX_FILE_SIZE:
-            return fail(msg=f"文件大小超过限制: {MAX_FILE_SIZE / 1024 / 1024}MB")
-        
+        max_size = path_manager.get_file_size_limit('document')
+        if len(file_content) > max_size:
+            return fail(msg=f"文件大小超过限制: {max_size / 1024 / 1024}MB")
+
         # 生成唯一文件名
         file_id = str(uuid.uuid4())
         safe_filename = f"{file_id}{file_ext}"
-        file_path = os.path.join(UPLOAD_DIR, safe_filename)
+        upload_dir = path_manager.get_upload_dir('document')
+        file_path = upload_dir / safe_filename
         
         # 保存文件
-        with open(file_path, "wb") as f:
+        with open(str(file_path), "wb") as f:
             f.write(file_content)
         
         # 创建数据库记录

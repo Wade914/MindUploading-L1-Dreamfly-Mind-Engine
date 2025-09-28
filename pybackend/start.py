@@ -16,6 +16,7 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 from init_db import init_database
+from core.path_manager import get_path_manager
 
 
 def run_server():
@@ -38,17 +39,9 @@ def setup_database():
 
 def create_directories():
     """创建必要的目录"""
-    directories = [
-        "uploads/thought",
-        "uploads/voice", 
-        "uploads/image",
-        "database/minds"
-    ]
-    
-    for directory in directories:
-        dir_path = project_root / directory
-        dir_path.mkdir(parents=True, exist_ok=True)
-        print(f"创建目录: {directory}")
+    path_manager = get_path_manager()
+    path_manager.ensure_directories()
+    print("✅ 所有必要目录已创建")
 
 
 def main():

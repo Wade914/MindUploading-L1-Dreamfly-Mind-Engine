@@ -26,10 +26,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 复制应用代码
 COPY . .
 
-# 创建必要的目录
-RUN mkdir -p uploads/documents uploads/image uploads/thought uploads/voice \
-    && mkdir -p database/minds \
-    && mkdir -p logs
+# 创建必要的目录（通过环境变量配置）
+RUN mkdir -p pybackend/uploads/documents pybackend/uploads/image pybackend/uploads/thought pybackend/uploads/voice \
+    && mkdir -p pybackend/database/minds \
+    && mkdir -p pybackend/logs
 
 # 设置权限
 RUN chmod +x main.py

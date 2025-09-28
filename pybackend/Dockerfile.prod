@@ -47,9 +47,9 @@ COPY --from=builder /root/.local /home/app/.local
 COPY --chown=app:app . .
 
 # 创建必要的目录并设置权限
-RUN mkdir -p uploads/documents uploads/image uploads/thought uploads/voice \
-    && mkdir -p database/minds \
-    && mkdir -p logs \
+RUN mkdir -p pybackend/uploads/documents pybackend/uploads/image pybackend/uploads/thought pybackend/uploads/voice \
+    && mkdir -p pybackend/database/minds \
+    && mkdir -p pybackend/logs \
     && chown -R app:app /app
 
 # 切换到非root用户

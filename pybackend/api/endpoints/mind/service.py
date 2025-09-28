@@ -12,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from fastapi import HTTPException, status
 from core.exception import UnicornException
+from cfg.config import settings
+from core.path_manager import get_path_manager
 
 from .models import Mind
 from .params import CreateMindParams, GetMindParams, ListMindParams
@@ -28,9 +30,8 @@ class MindService:
     
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.minds_dir = os.path.join(os.path.dirname(__file__), "../../../../database/minds")
-        # 确保目录存在
-        os.makedirs(self.minds_dir, exist_ok=True)
+        self.path_manager = get_path_manager()
+        self.minds_dir = str(self.path_manager.minds_dir)
 
     def _generate_filename(self, name: str) -> str:
         """生成文件名"""

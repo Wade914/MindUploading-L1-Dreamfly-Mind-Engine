@@ -19,7 +19,16 @@ class Logger:
         self.logger = logging.getLogger(logger_name)
 
     @staticmethod
-    def setup_logging(dir_path="logs/", config_path="config/log.json", default_level=logging.INFO, env_key="LOG_CFG"):
+    def setup_logging(dir_path=None, config_path="config/log.json", default_level=logging.INFO, env_key="LOG_CFG"):
+        # 如果没有指定dir_path，使用配置的日志目录
+        if dir_path is None:
+            try:
+                from core.path_manager import get_path_manager
+                path_manager = get_path_manager()
+                dir_path = str(path_manager.log_dir)
+            except ImportError:
+                dir_path = "logs/"
+
         value = os.getenv(env_key, None)
         if value:
             path = value
