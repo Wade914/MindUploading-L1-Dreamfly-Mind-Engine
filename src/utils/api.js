@@ -5,10 +5,11 @@
  */
 
 import authManager from './auth.js'
+import { config, buildApiUrl, logger } from './config.js'
 
 // API配置
 const API_CONFIG = {
-  BASE_URL: 'http://localhost:8000',
+  BASE_URL: config.API_BASE_URL,
   ENDPOINTS: {
     // 用户资产管理
     CONSCIOUSNESS_ASSETS: '/api/user/consciousness-assets',

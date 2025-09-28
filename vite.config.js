@@ -23,7 +23,9 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: process.env.VUE_APP_ENVIRONMENT === 'production'
+          ? (process.env.VUE_APP_PROD_API_BASE_URL || 'https://api.your-domain.com')
+          : (process.env.VUE_APP_DEV_API_BASE_URL || 'http://localhost:8000'),
         changeOrigin: true,
       }
     }

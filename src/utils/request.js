@@ -5,6 +5,7 @@
  */
 
 import authManager from './auth.js'
+import { config, buildApiUrl, logger } from './config.js'
 
 /**
  * 统一的API请求方法
@@ -27,7 +28,7 @@ export function apiRequest(options) {
 
     // 添加基础URL
     if (finalOptions.url && !finalOptions.url.startsWith('http')) {
-      finalOptions.url = `http://localhost:8000${finalOptions.url}`
+      finalOptions.url = buildApiUrl(finalOptions.url)
     }
 
     // 添加JWT token到请求头

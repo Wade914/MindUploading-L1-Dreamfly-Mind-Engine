@@ -79,9 +79,25 @@ async def get_mind_content(
 ) -> dict:
     """
     获取指定意识体内容
-    
+
     - **filename**: 文件名
     """
     service = MindService(db)
     result = await service.get_mind_content(filename)
     return success(data=result.content, msg="获取成功")
+
+
+@router.delete("/mind/{mind_id}", summary="删除意识体")
+async def delete_mind(
+    mind_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user_id: str = Depends(get_current_user_id)
+) -> dict:
+    """
+    删除意识体
+
+    - **mind_id**: 意识体ID
+    """
+    service = MindService(db)
+    result = await service.delete_mind(mind_id, current_user_id)
+    return success(data=result, msg="删除成功")

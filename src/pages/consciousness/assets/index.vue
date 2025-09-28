@@ -349,14 +349,33 @@
         </view>
       </view>
     </view>
+
+    <!-- 自定义弹窗 -->
+    <CustomModal
+      :visible="modal.visible"
+      :title="modal.title"
+      :content="modal.content"
+      :show-cancel="modal.showCancel"
+      :cancel-text="modal.cancelText"
+      :confirm-text="modal.confirmText"
+      :type="modal.type"
+      :mask-closable="true"
+      @confirm="handleModalConfirm"
+      @cancel="handleModalCancel"
+    />
   </view>
 </template>
 
 <script>
 import { assetsAPI, transactionAPI } from '@/utils/api.js'
+import CustomModal from '@/components/CustomModal.vue'
+import { buildApiUrl } from '@/utils/config.js'
 
 export default {
   name: 'DigitalAssets',
+  components: {
+    CustomModal
+  },
   data() {
     return {
       loading: false,
@@ -410,7 +429,18 @@ export default {
       marketItems: [],
       currentTab: 'owned',
       ownedConsciousness: [],
-      purchasedConsciousness: []
+      purchasedConsciousness: [],
+      modal: {
+        visible: false,
+        title: '',
+        content: '',
+        showCancel: true,
+        cancelText: '取消',
+        confirmText: '确定',
+        type: 'default',
+        onConfirm: null,
+        onCancel: null
+      }
     }
   },
   async mounted() {
@@ -462,34 +492,81 @@ export default {
       }
     },
 
-    // 加载用户资产
+    // 加载用户意识体（从minds表）
     async loadUserAssets() {
       try {
-        const assets = await assetsAPI.getUserAssets()
-        // 将API数据转换为前端需要的格式
-        this.ownedConsciousness = assets.map(asset => ({
-          id: asset.id,
-          name: asset.name,
-          type: asset.type,
-          description: asset.description,
-          avatar: asset.avatar_url || '/static/avatar.jpg',
-          completeness: asset.completeness,
-          activity: asset.activity_score,
-          syncStatus: asset.sync_status,
-          status: asset.status,
-          tags: asset.tags || [],
-          interactions: asset.interactions_count,
-          rating: asset.rating,
-          lastSync: this.formatTime(asset.updated_at),
-          isEditing: false,
-          pricingModel: asset.pricing_model || {
-            preview: { enabled: false, duration: 0 },
-            rent: { enabled: false, price: 0 },
-            buy: { enabled: false, price: 0 }
+        const { get } = await import('@/utils/request.js');
+        const response = await get('/api/minds', {
+          page: 1,
+          page_size: 100  // 获取所有用户的意识体
+        });
+
+        if (response && response.data && response.data.code === 200) {
+          const mindData = response.data.data;
+          if (mindData.items && mindData.items.length > 0) {
+            // 将minds数据转换为前端需要的格式
+            this.ownedConsciousness = await Promise.all(mindData.items.map(async (mind) => {
+              // 获取mind文件内容以提取头像
+              let avatar = '/static/avatar.jpg'; // 默认头像
+              try {
+                const mindContentResponse = await uni.request({
+                  url: buildApiUrl(`/api/mind/${mind.filename}`),
+                  method: 'GET'
+                });
+
+                if (mindContentResponse.data && mindContentResponse.data.code === 200) {
+                  let content = mindContentResponse.data.data;
+                  if (content.includes('export default')) {
+                    content = content.replace(/export\s+default\s+/, '').trim();
+                  }
+                  const mindFileData = JSON.parse(content);
+
+                  // 检查是否有image_data字段
+                  if (mindFileData.metadata && mindFileData.metadata.image_data) {
+                    // 如果image_data已经是完整的data URL，直接使用
+                    if (mindFileData.metadata.image_data.startsWith('data:')) {
+                      avatar = mindFileData.metadata.image_data;
+                    } else {
+                      // 如果只是base64编码，添加data URL前缀
+                      avatar = `data:image/jpeg;base64,${mindFileData.metadata.image_data}`;
+                    }
+                  }
+                }
+              } catch (error) {
+                console.error('获取mind文件头像失败:', error);
+              }
+
+              return {
+                id: mind.id,
+                name: mind.name,
+                type: mind.type || 'MindCopy',
+                description: `创建于 ${mind.birth || '未知'}`,
+                avatar: avatar, // 使用从mind文件中提取的头像
+                completeness: 100, // mind文件默认完整
+                activity: 85, // 默认活跃度
+                syncStatus: 'synced',
+                status: 'active',
+                tags: [mind.protocol || 'MCP-v1', mind.blockchain || 'ethereum'],
+                interactions: 0,
+                rating: 9.5,
+                lastSync: this.formatTime(mind.updated_at),
+                isEditing: false,
+                filename: mind.filename, // 保存文件名用于删除
+                pricingModel: {
+                  preview: { enabled: false, duration: 0 },
+                  rent: { enabled: false, price: 0 },
+                  buy: { enabled: false, price: 0 }
+                }
+              };
+            }));
+            console.log('加载用户意识体成功:', this.ownedConsciousness);
+          } else {
+            this.ownedConsciousness = [];
           }
-        }))
+        }
       } catch (error) {
-        console.error('加载用户资产失败:', error)
+        console.error('加载用户意识体失败:', error)
+        this.ownedConsciousness = []
       }
     },
 
@@ -640,10 +717,112 @@ export default {
       }
     },
     interactWithConsciousness(consciousness) {
-      // 打开对话界面
+      // 跳转到意识体对话页面
+      uni.navigateTo({
+        url: `/pages/consciousness/interaction/index?file=${encodeURIComponent(consciousness.filename)}`
+      });
     },
     showMoreOptions(consciousness) {
-      // 显示更多操作选项
+      // 显示操作选项弹窗
+      this.showModal({
+        title: '意识体操作',
+        content: `选择对"${consciousness.name}"的操作：`,
+        showCancel: true,
+        cancelText: '编辑',
+        confirmText: '删除',
+        type: 'danger',
+        onConfirm: () => {
+          this.deleteConsciousness(consciousness);
+        },
+        onCancel: () => {
+          this.editConsciousness(consciousness);
+        }
+      });
+    },
+
+    // 编辑意识体
+    editConsciousness(consciousness) {
+      // 跳转到编辑页面
+      uni.navigateTo({
+        url: `/pages/upload/minddata?edit=true&id=${consciousness.id}`
+      });
+    },
+
+    // 删除意识体
+    async deleteConsciousness(consciousness) {
+      this.showModal({
+        title: '确认删除',
+        content: `确定要删除意识体"${consciousness.name}"吗？此操作不可恢复。`,
+        type: 'danger',
+        confirmText: '删除',
+        onConfirm: async () => {
+          try {
+            // 调用删除API
+            const response = await uni.request({
+              url: buildApiUrl(`/api/mind/${consciousness.id}`),
+              method: 'DELETE'
+            });
+
+            if (response.data && response.data.code === 200) {
+              uni.showToast({
+                title: '删除成功',
+                icon: 'success'
+              });
+              // 重新加载意识体列表
+              await this.loadUserAssets();
+              // 刷新父页面统计数据
+              uni.$emit('refreshDashboardStats');
+            } else {
+              throw new Error(response.data?.msg || '删除失败');
+            }
+          } catch (error) {
+            console.error('删除意识体失败:', error);
+            uni.showToast({
+              title: '删除失败',
+              icon: 'error'
+            });
+          }
+        }
+      });
+    },
+
+    // 导出意识体
+    exportConsciousness(consciousness) {
+      uni.showToast({
+        title: '导出功能开发中',
+        icon: 'none'
+      });
+    },
+
+    // 自定义弹窗方法
+    showModal(options) {
+      this.modal = {
+        visible: true,
+        title: options.title || '提示',
+        content: options.content || '',
+        showCancel: options.showCancel !== false,
+        cancelText: options.cancelText || '取消',
+        confirmText: options.confirmText || '确定',
+        type: options.type || 'default',
+        onConfirm: options.onConfirm || null,
+        onCancel: options.onCancel || null
+      }
+    },
+
+    // 弹窗确认处理
+    handleModalConfirm() {
+      if (this.modal.onConfirm) {
+        this.modal.onConfirm()
+      }
+      this.modal.visible = false
+    },
+
+    // 弹窗取消处理
+    handleModalCancel() {
+      if (this.modal.onCancel) {
+        this.modal.onCancel()
+      }
+      this.modal.visible = false
     }
   }
 }

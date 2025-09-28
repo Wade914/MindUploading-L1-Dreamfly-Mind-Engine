@@ -4,6 +4,8 @@
  * @Author: DreamFly Team
  */
 
+import { config, buildApiUrl, logger } from './config.js'
+
 // 用户状态管理
 class AuthManager {
   constructor() {
@@ -92,7 +94,7 @@ class AuthManager {
     return new Promise((resolve) => {
       // 登录请求不需要token，直接使用uni.request
       uni.request({
-        url: 'http://localhost:8000/api/login',
+        url: buildApiUrl('/api/login'),
         method: 'POST',
         header: {
           'Content-Type': 'application/json'

@@ -40,14 +40,14 @@ class MindService:
         """创建意识体"""
         filename = self._generate_filename(params.name)
         
-        # 检查是否已存在同名意识体
+        # 检查是否已存在同名意识体（防止重复创建）
         query = select(Mind).where(
             Mind.user_id == params.user_id,
             Mind.name == params.name
         )
         result = await self.db.execute(query)
         existing_mind = result.scalar_one_or_none()
-        
+
         if existing_mind:
             raise UnicornException(code=400, errmsg=f"意识体 '{params.name}' 已存在")
 
@@ -157,3 +157,32 @@ class MindService:
                 normalized_filenames.append(filename)
                 
         return normalized_filenames
+
+    async def delete_mind(self, mind_id: str, user_id: str) -> dict:
+        """删除意识体"""
+        # 查找意识体
+        query = select(Mind).where(Mind.id == mind_id)
+        result = await self.db.execute(query)
+        mind = result.scalar_one_or_none()
+
+        if not mind:
+            raise UnicornException(code=404, errmsg="意识体不存在")
+
+        # 验证所有权
+        if mind.user_id != user_id:
+            raise UnicornException(code=403, errmsg="无权删除此意识体")
+
+        # 删除文件（如果存在）
+        if mind.filename:
+            file_path = os.path.join(self.minds_dir, mind.filename)
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                except Exception as e:
+                    print(f"删除文件失败: {str(e)}")
+
+        # 删除数据库记录
+        await self.db.delete(mind)
+        await self.db.commit()
+
+        return {"deleted_id": mind_id, "filename": mind.filename}

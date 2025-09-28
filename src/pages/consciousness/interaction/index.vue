@@ -84,6 +84,7 @@
 import jobsMind from './jobs.mind'
 import aristotleMind from './aristotle.mind'
 import confuciusMind from './confucius.mind'
+import { buildApiUrl } from '@/utils/config.js'
 
 const ASCII_ART = [
   "    __  ___           ________    __      __                 ___           ",
@@ -209,27 +210,7 @@ export default {
       this.logMessage('Type "help" for available commands', 'info')
     },
     
-    loadMindStatus(file) {
-      this.mindFile = file
-      this.mindLoaded = true
-      
-      // 模拟从 jobs.mind 加载数据
-      if (file === 'jobs.mind') {
-        this.mindStatus = {
-          'Name': 'Steve Jobs',
-          'Birth': '1955-02-24',
-          'Death': '2011-10-05',
-          'Occupation': 'Entrepreneur, Industrial designer, Investor, Media proprietor',
-          'Companies': 'Apple Inc., NeXT, Pixar',
-          'Notable Products': 'Macintosh, iPod, iPhone, iPad',
-          'Consciousness Level': '98.5%',
-          'Memory Fragments': '1,234,567',
-          'Personality Match': '99.2%',
-          'Active Neural Connections': '8.9B'
-        }
-        this.logMessage('Mind file loaded successfully', 'success')
-      }
-    },
+    // 已删除硬编码的loadMindStatus方法，所有mind文件都使用动态数据
     
     logMessage(message, type = 'info') {
       this.systemLogs.push({ message, type })
@@ -341,7 +322,7 @@ export default {
         if (!mindData) {
           try {
             const res = await uni.request({
-              url: `http://localhost:8000/api/mind/${file}`,
+              url: buildApiUrl(`/api/mind/${file}`),
               method: 'GET'
             })
             if (res.data.code === 200) {
@@ -417,14 +398,15 @@ export default {
         // 计算生命天数
         const lifeDays = this.calculateLifeDays(mindData.metadata.birth)
         
-        // 设置意识体状态
+        // 设置意识体状态（基于实际mind数据）
         this.mindStatus = {
-          '意识体': mindData.metadata.name,
-          '意识等级': `${(mindData.consciousness.anti_program_ratio * 100).toFixed(1)}%`,
-          '记忆完整度': `${(mindData.consciousness.connection_degree * 100).toFixed(1)}%`,
+          '意识体': mindData.metadata.name || '未知',
+          '出生日期': mindData.metadata.birth || '未知',
+          '职业': mindData.metadata.occupation || '未知',
+          '意识等级': `${(mindData.consciousness?.anti_program_ratio * 100 || 85).toFixed(1)}%`,
+          '记忆完整度': `${(mindData.consciousness?.connection_degree * 100 || 92).toFixed(1)}%`,
           '生命天数': lifeDays,
-          '情感模块': '已同步',
-          '神经连接': '8.9B活跃',
+          '记忆片段': mindData.memory?.memory_fragments?.length || 0,
           '系统状态': '在线',
           '意识Token': '0'
         }
@@ -432,8 +414,8 @@ export default {
         // 设置ASCII艺术图标
         this.asciiArt = mindData.metadata.ascii_art
         
-        // 设置意识体的人设prompt
-        this.mindPrompt = mindData.metadata.personality_prompt
+        // 构建完整的意识体提示词
+        this.mindPrompt = this.buildMindPrompt(mindData)
         
         // 保存加载的意识体数据
         this.uploadedMind = mindData
@@ -469,7 +451,63 @@ export default {
       
       return true
     },
-    
+
+    // 构建基于mind文件的完整系统提示词（不包含指导语）
+    buildMindPrompt(mindData) {
+      if (!mindData) {
+        return '你是一个AI助手，请根据问题进行回答。';
+      }
+
+      console.log('构建interaction提示词，mind数据:', mindData);
+
+      // 构建完整的提示词，不包含指导语
+      let prompt = '';
+
+      // 如果有现成的personality_prompt，作为基础
+      if (mindData.metadata && mindData.metadata.personality_prompt) {
+        prompt = mindData.metadata.personality_prompt;
+        console.log('使用现成的personality_prompt作为基础:', prompt);
+      } else {
+        prompt = `你现在要扮演一个数字意识体，基于以下个人信息进行回答：`;
+      }
+
+      // 补充基本信息（无论是否有personality_prompt都添加）
+      let hasAdditionalInfo = false;
+
+      if (mindData.metadata) {
+        if (mindData.metadata.name) {
+          prompt += `\n姓名：${mindData.metadata.name}`;
+          hasAdditionalInfo = true;
+        }
+        if (mindData.metadata.birth) {
+          prompt += `\n出生日期：${mindData.metadata.birth}`;
+          hasAdditionalInfo = true;
+        }
+        if (mindData.metadata.occupation) {
+          prompt += `\n职业：${mindData.metadata.occupation}`;
+          hasAdditionalInfo = true;
+        }
+      }
+
+      // 自我认知
+      if (mindData.memory && mindData.memory.self_cognition) {
+        prompt += `\n\n自我认知：${mindData.memory.self_cognition}`;
+        hasAdditionalInfo = true;
+      }
+
+      // 记忆片段
+      if (mindData.memory && mindData.memory.memory_fragments && mindData.memory.memory_fragments.length > 0) {
+        prompt += `\n\n重要记忆：`;
+        mindData.memory.memory_fragments.forEach((fragment, index) => {
+          prompt += `\n${fragment.time}: ${fragment.content}`;
+        });
+        hasAdditionalInfo = true;
+      }
+
+      console.log('构建的interaction提示词:', prompt);
+      return prompt;
+    },
+
     async chatWithMind(message) {
       try {
         this.isThinking = true

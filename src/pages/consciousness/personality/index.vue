@@ -216,13 +216,14 @@
 <script>
 import { testAPI } from '@/utils/api.js'
 import authManager from '@/utils/auth.js'
+import { config, buildApiUrl } from '@/utils/config.js'
 
 export default {
   name: 'PersonalityModule',
   data() {
     return {
       // API配置
-      API_BASE_URL: 'http://localhost:8000',
+      API_BASE_URL: config.API_BASE_URL,
       // 测试类型常量
       TEST_TYPE_TTFD: 'ttfd',
       showTTFD: false,
@@ -243,6 +244,7 @@ export default {
       consciousnessMessages: [],
       canAnswer: true,
       testCompleted: false,
+      userMindData: null, // 用户的mind文件数据
       questions: [
         "你喜欢什么颜色？",
         "你认为有外星人吗？",
@@ -357,6 +359,7 @@ export default {
 
     await this.loadTestResults()
     await this.loadUserMind()
+    await this.loadUserMindData() // 加载用户mind数据用于对话
   },
   methods: {
     // 通用提示方法
@@ -555,12 +558,33 @@ export default {
 
     // 生成意识体回答
     async generateConsciousnessAnswer(question) {
-      if (!this.userPersonalityPrompt) {
-        this.showToast('请先创建个人意识体');
-        return;
+      // 检查是否有用户的mind文件数据
+      if (!this.userMindData) {
+        console.log('用户mind文件未加载，尝试加载...');
+        await this.loadUserMindData();
+        if (!this.userMindData) {
+          this.consciousnessMessages.push({
+            type: 'answer',
+            content: '请先创建并上传您的意识体文件。',
+            time: this.getCurrentTime()
+          });
+          return;
+        }
       }
 
+      // 显示AI正在思考的状态
+      this.consciousnessMessages.push({
+        type: 'answer',
+        content: '正在思考中...',
+        time: this.getCurrentTime()
+      });
+
       try {
+        console.log('开始调用AI API生成意识体回答，使用用户mind数据...');
+
+        // 构建基于用户mind文件的系统提示词
+        const mindPrompt = this.buildMindPrompt();
+
         // 调用AI API生成回答 - 使用流式响应
         const response = await fetch(`${this.API_BASE_URL}/api/ai/chat/completions`, {
           method: 'POST',
@@ -569,7 +593,7 @@ export default {
           },
           body: JSON.stringify({
             messages: [
-              { role: 'system', content: this.userPersonalityPrompt },
+              { role: 'system', content: mindPrompt },
               { role: 'user', content: question }
             ],
             temperature: 0.7,
@@ -578,18 +602,19 @@ export default {
           })
         });
 
+        console.log('AI API请求发送完成，等待响应...');
+
         if (!response.ok) {
-          throw new Error(`AI API调用失败: ${response.status}`);
+          const errorText = await response.text();
+          console.error('AI API调用失败:', response.status, errorText);
+          throw new Error(`AI API调用失败: ${response.status} - ${errorText}`);
         }
 
+        console.log('AI API响应成功，开始处理流式数据...');
         let aiAnswer = '';
 
-        // 先添加一个空的回答消息，用于流式更新
-        this.consciousnessMessages.push({
-          type: 'answer',
-          content: '',
-          time: this.getCurrentTime()
-        });
+        // 获取最后一条消息的索引（就是刚才添加的"正在思考中..."消息）
+        const lastMessageIndex = this.consciousnessMessages.length - 1;
 
         // 处理流式响应
         const reader = response.body.getReader();
@@ -614,7 +639,7 @@ export default {
                   if (content) {
                     aiAnswer += content;
                     // 实时更新最后一条消息的内容
-                    this.consciousnessMessages[this.consciousnessMessages.length - 1].content = aiAnswer;
+                    this.consciousnessMessages[lastMessageIndex].content = aiAnswer;
                   }
                 }
               } catch (e) {
@@ -628,13 +653,27 @@ export default {
         // 如果没有生成内容，使用默认回答
         if (!aiAnswer.trim()) {
           aiAnswer = '我需要更多时间思考这个问题。';
-          this.consciousnessMessages[this.consciousnessMessages.length - 1].content = aiAnswer;
+          this.consciousnessMessages[lastMessageIndex].content = aiAnswer;
         }
 
+        console.log('AI回答生成完成:', aiAnswer);
         this.debugLog(`问题: ${question}`);
         this.debugLog(`意识体回答: ${aiAnswer}`);
       } catch (error) {
-        this.handleError(error, '生成意识体回答失败', true);
+        console.error('AI API调用失败:', error);
+
+        // 更新最后一条消息为错误回答
+        if (this.consciousnessMessages.length > 0) {
+          const lastMessageIndex = this.consciousnessMessages.length - 1;
+          this.consciousnessMessages[lastMessageIndex].content = '抱歉，我现在无法回答这个问题。请稍后再试。';
+        }
+
+        // 显示错误提示
+        uni.showToast({
+          title: 'AI服务暂时不可用',
+          icon: 'none',
+          duration: 2000
+        });
       }
     },
     async submitUserAnswer() {
@@ -650,16 +689,125 @@ export default {
       this.userInput = '';
       this.canAnswer = false;
 
-      // 等待AI生成回答
+      // 等待AI生成意识体回答
       const currentQuestion = this.questions[this.currentQuestionIndex];
       await this.generateConsciousnessAnswer(currentQuestion);
 
-      // AI回答完成后，再显示下一个问题
+      // 双方都回答完成后，等待3秒再显示下一个问题
       this.currentQuestionIndex++;
-      setTimeout(() => {
-        this.askNextQuestion();
-      }, 1000);
+      if (this.currentQuestionIndex < this.questions.length) {
+        setTimeout(() => {
+          this.askNextQuestion();
+        }, 3000); // 等待3秒让用户阅读双方回答
+      } else {
+        // 所有问题都完成了
+        setTimeout(() => {
+          this.testCompleted = true;
+          this.generateReport();
+        }, 3000);
+      }
     },
+
+    // 加载用户mind数据
+    async loadUserMindData() {
+      try {
+        const { get } = await import('@/utils/request.js');
+        const response = await get('/api/minds', {
+          page: 1,
+          page_size: 1
+        });
+
+        if (response && response.data && response.data.code === 200) {
+          const mindData = response.data.data;
+          if (mindData.items && mindData.items.length > 0) {
+            const userMind = mindData.items[0];
+            console.log('获取到用户mind记录:', userMind);
+
+            // 使用数据库中的filename获取完整的mind文件内容
+            const filename = userMind.filename;
+            const mindContentResponse = await uni.request({
+              url: buildApiUrl(`/api/mind/${filename}`),
+              method: 'GET'
+            });
+
+            if (mindContentResponse.data && mindContentResponse.data.code === 200) {
+              let content = mindContentResponse.data.data;
+              if (content.includes('export default')) {
+                content = content.replace(/export\s+default\s+/, '').trim();
+              }
+              this.userMindData = JSON.parse(content);
+              console.log('用户mind数据加载成功:', this.userMindData);
+            } else {
+              console.error('获取mind文件内容失败:', mindContentResponse.data);
+            }
+          } else {
+            console.log('用户还没有创建意识体文件');
+          }
+        }
+      } catch (error) {
+        console.error('加载用户mind数据失败:', error);
+      }
+    },
+
+    // 构建基于用户mind文件的系统提示词
+    buildMindPrompt() {
+      if (!this.userMindData) {
+        return '你是一个AI助手，请根据问题进行回答。';
+      }
+
+      const mindData = this.userMindData;
+      console.log('构建提示词，mind数据:', mindData);
+
+      // 构建完整的提示词，指导语在最前面
+      let prompt = `请以这个人的身份和视角来回答问题，体现出相应的性格特点和人生经历。回答要简洁自然，就像这个人在真实对话中的表达方式。\n\n`;
+
+      // 如果有现成的personality_prompt，添加到指导语后面
+      if (mindData.metadata && mindData.metadata.personality_prompt) {
+        prompt += mindData.metadata.personality_prompt;
+        console.log('使用现成的personality_prompt:', mindData.metadata.personality_prompt);
+      } else {
+        prompt += `你现在要扮演一个数字意识体，基于以下个人信息进行回答：`;
+      }
+
+      // 补充基本信息（无论是否有personality_prompt都添加）
+      let hasAdditionalInfo = false;
+
+      if (mindData.metadata) {
+        if (mindData.metadata.name) {
+          prompt += `\n姓名：${mindData.metadata.name}`;
+          hasAdditionalInfo = true;
+        }
+        if (mindData.metadata.birth) {
+          prompt += `\n出生日期：${mindData.metadata.birth}`;
+          hasAdditionalInfo = true;
+        }
+        if (mindData.metadata.occupation) {
+          prompt += `\n职业：${mindData.metadata.occupation}`;
+          hasAdditionalInfo = true;
+        }
+      }
+
+      // 自我认知
+      if (mindData.memory && mindData.memory.self_cognition) {
+        prompt += `\n\n自我认知：${mindData.memory.self_cognition}`;
+        hasAdditionalInfo = true;
+      }
+
+      // 记忆片段
+      if (mindData.memory && mindData.memory.memory_fragments && mindData.memory.memory_fragments.length > 0) {
+        prompt += `\n\n重要记忆：`;
+        mindData.memory.memory_fragments.forEach((fragment, index) => {
+          prompt += `\n${fragment.time}: ${fragment.content}`;
+        });
+        hasAdditionalInfo = true;
+      }
+
+      // 指导语已经在最前面了，不需要重复添加
+
+      console.log('构建的提示词:', prompt);
+      return prompt;
+    },
+
     async generateReport() {
       try {
         // 计算TTFD得分

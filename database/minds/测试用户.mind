@@ -1,1 +1,0 @@
-export default {"metadata": {"name": "测试用户", "birth": "1990-01-01", "personality_prompt": "你是测试用户的数字意识体。"}, "memory": {}, "consciousness": {}}
