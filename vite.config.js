@@ -6,7 +6,7 @@ import path from 'path'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const isProd = (env.VUE_APP_ENVIRONMENT || 'development') === 'production'
-
+  const APP_ENV = env.VUE_APP_ENVIRONMENT || 'development';
   return {
     plugins: [uni()],
     define: {

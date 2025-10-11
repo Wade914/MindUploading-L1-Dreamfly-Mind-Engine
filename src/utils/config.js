@@ -1,34 +1,21 @@
 /**
- * 环境配置管理（Vite 兼容静态替换版）
+ * 环境配置管理（Vite define 全局常量版）
  * @Created on: 2025/01/15 10:00
  * @Author: DreamFly Team
  */
 
-// ✅ 使用静态表达式，确保 Vite 的 define 能正确替换
-const ENVIRONMENT = process.env.VUE_APP_ENVIRONMENT || 'development';
-const IS_PRODUCTION = ENVIRONMENT === 'production';
-const DEBUG = (process.env.VUE_APP_DEBUG || 'false') === 'true';
-
-// config.js
+// ✅ 完全使用 vite.config.js 中 define 注入的全局常量
 export const config = {
   ENVIRONMENT: __IS_PRODUCTION__ ? 'production' : 'development',
   DEBUG: __DEBUG__,
   isDevelopment: !__IS_PRODUCTION__,
   isProduction: __IS_PRODUCTION__,
 
+  // ✅ 直接使用注入的字符串，不再重复判断
   API_BASE_URL: __API_BASE_URL__,
   FRONTEND_URL: __FRONTEND_URL__,
 
-  // API 基础地址（关键：静态条件表达式）
-  API_BASE_URL: IS_PRODUCTION
-    ? (process.env.VUE_APP_PROD_API_BASE_URL || 'http://8.129.25.16:8000')
-    : (process.env.VUE_APP_DEV_API_BASE_URL || 'http://localhost:8000'),
-
-  FRONTEND_URL: IS_PRODUCTION
-    ? (process.env.VUE_APP_PROD_FRONTEND_URL || 'http://8.129.25.16')
-    : (process.env.VUE_APP_DEV_FRONTEND_URL || 'http://localhost:5173'),
-
-  // API端点配置
+  // API端点配置（保持不变）
   API_ENDPOINTS: {
     // 认证相关
     LOGIN: '/api/login',
