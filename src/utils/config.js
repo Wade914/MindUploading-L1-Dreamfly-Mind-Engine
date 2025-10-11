@@ -9,11 +9,15 @@ const ENVIRONMENT = process.env.VUE_APP_ENVIRONMENT || 'development';
 const IS_PRODUCTION = ENVIRONMENT === 'production';
 const DEBUG = (process.env.VUE_APP_DEBUG || 'false') === 'true';
 
+// config.js
 export const config = {
-  ENVIRONMENT,
-  DEBUG,
-  isDevelopment: !IS_PRODUCTION,
-  isProduction: IS_PRODUCTION,
+  ENVIRONMENT: __IS_PRODUCTION__ ? 'production' : 'development',
+  DEBUG: __DEBUG__,
+  isDevelopment: !__IS_PRODUCTION__,
+  isProduction: __IS_PRODUCTION__,
+
+  API_BASE_URL: __API_BASE_URL__,
+  FRONTEND_URL: __FRONTEND_URL__,
 
   // API 基础地址（关键：静态条件表达式）
   API_BASE_URL: IS_PRODUCTION
