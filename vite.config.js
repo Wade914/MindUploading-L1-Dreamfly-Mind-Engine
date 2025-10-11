@@ -11,15 +11,16 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [uni()],
-    define: {
-      // 关键：将整个 process.env 模拟为一个静态对象（让浏览器中 process.env 可用）
-      'process.env': {
-        VUE_APP_ENVIRONMENT: JSON.stringify(appEnv),
-        VUE_APP_DEV_API_BASE_URL: JSON.stringify(env.VUE_APP_DEV_API_BASE_URL || 'http://localhost:8000'),
-        VUE_APP_PROD_API_BASE_URL: JSON.stringify(env.VUE_APP_PROD_API_BASE_URL || 'http://8.129.25.16:8000'),
-        VUE_APP_DEBUG: JSON.stringify(env.VUE_APP_DEBUG || 'false'),
-      }
-    },
+define: {
+  'process.env': {
+    VUE_APP_ENVIRONMENT: JSON.stringify(APP_ENV), // ✅ 字符串需要 stringify
+    VUE_APP_DEBUG: JSON.stringify(env.VUE_APP_DEBUG || 'false'), // ✅ 布尔/字符串需要
+    VUE_APP_DEV_API_BASE_URL: env.VUE_APP_DEV_API_BASE_URL || 'http://localhost:8000', // ❌ 不要 stringify！
+    VUE_APP_PROD_API_BASE_URL: env.VUE_APP_PROD_API_BASE_URL || 'http://8.129.25.16:8000', // ❌ 不要 stringify！
+    VUE_APP_DEV_FRONTEND_URL: env.VUE_APP_DEV_FRONTEND_URL || 'http://localhost:5173',
+    VUE_APP_PROD_FRONTEND_URL: env.VUE_APP_PROD_FRONTEND_URL || 'http://8.129.25.16',
+  }
+  },
     css: {
       preprocessorOptions: {
         scss: {
