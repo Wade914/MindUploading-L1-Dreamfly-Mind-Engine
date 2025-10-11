@@ -1,65 +1,29 @@
 /**
- * 环境配置管理
+ * 环境配置管理（Vite 兼容静态替换版）
  * @Created on: 2025/01/15 10:00
  * @Author: DreamFly Team
  */
 
-/**
- * 获取环境变量
- * @param {string} key - 环境变量键名
- * @param {string} defaultValue - 默认值
- * @returns {string} 环境变量值
- */
-function getEnvVar(key, defaultValue = '') {
-  // 在uni-app中，环境变量通过process.env访问
-  // 注意：只有以VUE_APP_开头的变量才会被暴露到客户端
-  return process.env[key] || defaultValue
-}
+// ✅ 使用静态表达式，确保 Vite 的 define 能正确替换
+const ENVIRONMENT = process.env.VUE_APP_ENVIRONMENT || 'development';
+const IS_PRODUCTION = ENVIRONMENT === 'production';
+const DEBUG = (process.env.VUE_APP_DEBUG || 'false') === 'true';
 
-/**
- * 获取当前环境
- */
-const ENVIRONMENT = getEnvVar('VUE_APP_ENVIRONMENT', 'development')
-const IS_DEVELOPMENT = ENVIRONMENT === 'development'
-const IS_PRODUCTION = ENVIRONMENT === 'production'
-
-/**
- * 根据环境获取配置值
- * @param {string} devKey - 开发环境键名
- * @param {string} prodKey - 生产环境键名
- * @param {string} defaultValue - 默认值
- * @returns {string} 配置值
- */
-function getEnvConfig(devKey, prodKey, defaultValue = '') {
-  if (IS_PRODUCTION) {
-    return getEnvVar(prodKey, defaultValue)
-  }
-  return getEnvVar(devKey, defaultValue)
-}
-
-/**
- * 应用配置
- */
 export const config = {
-  // 环境配置
   ENVIRONMENT,
-  DEBUG: getEnvVar('VUE_APP_DEBUG', 'true') === 'true',
-  isDevelopment: IS_DEVELOPMENT,
+  DEBUG,
+  isDevelopment: !IS_PRODUCTION,
   isProduction: IS_PRODUCTION,
 
-  // API配置 - 根据环境自动选择
-  API_BASE_URL: getEnvConfig(
-    'VUE_APP_DEV_API_BASE_URL',
-    'VUE_APP_PROD_API_BASE_URL',
-    'http://localhost:8000'
-  ),
+  // API 基础地址（关键：静态条件表达式）
+  API_BASE_URL: IS_PRODUCTION
+    ? (process.env.VUE_APP_PROD_API_BASE_URL || 'http://8.129.25.16:8000')
+    : (process.env.VUE_APP_DEV_API_BASE_URL || 'http://localhost:8000'),
 
-  FRONTEND_URL: getEnvConfig(
-    'VUE_APP_DEV_FRONTEND_URL',
-    'VUE_APP_PROD_FRONTEND_URL',
-    'http://localhost:5173'
-  ),
-  
+  FRONTEND_URL: IS_PRODUCTION
+    ? (process.env.VUE_APP_PROD_FRONTEND_URL || 'http://8.129.25.16')
+    : (process.env.VUE_APP_DEV_FRONTEND_URL || 'http://localhost:5173'),
+
   // API端点配置
   API_ENDPOINTS: {
     // 认证相关
@@ -103,27 +67,19 @@ export const config = {
 
 /**
  * 构建完整的API URL
- * @param {string} endpoint - API端点
- * @returns {string} 完整的API URL
  */
 export function buildApiUrl(endpoint) {
-  // 如果endpoint已经是完整URL，直接返回
   if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
     return endpoint
   }
-  
-  // 确保endpoint以/开头
   if (!endpoint.startsWith('/')) {
     endpoint = '/' + endpoint
   }
-  
   return config.API_BASE_URL + endpoint
 }
 
 /**
  * 获取API端点URL
- * @param {string} endpointKey - 端点键名
- * @returns {string} 完整的API URL
  */
 export function getApiUrl(endpointKey) {
   const endpoint = config.API_ENDPOINTS[endpointKey]
@@ -154,5 +110,4 @@ export const logger = {
   }
 }
 
-// 默认导出配置对象
 export default config
