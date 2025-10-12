@@ -522,7 +522,7 @@ export default {
         })
 
         // 准备API请求 - 恢复流式响应
-        const response = await fetch('http://localhost:8000/api/ai/chat/completions', {
+        const response = await fetch(buildApiUrl('/api/ai/chat/completions'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -838,7 +838,7 @@ export default {
         const mind_name = this.mindStatus['意识体'] || 'unknown'
 
         await uni.request({
-          url: 'http://localhost:8000/api/interaction/record',
+          url: buildApiUrl('/api/interaction/record'),
           method: 'POST',
           data: {
             user_id,

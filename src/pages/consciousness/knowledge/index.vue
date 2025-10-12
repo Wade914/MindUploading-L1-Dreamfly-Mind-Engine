@@ -405,6 +405,7 @@
 import { documentsAPI, notesAPI } from '@/utils/api.js'
 import authManager from '@/utils/auth.js'
 import { getFileIcon, formatFileSize } from '@/utils/fileUtils'
+import { buildApiUrl } from '@/utils/config.js'
 
 export default {
   name: 'KnowledgeBase',
@@ -565,7 +566,7 @@ export default {
 
       return new Promise((resolve, reject) => {
         uni.uploadFile({
-          url: `http://localhost:8000/api/user/documents/upload?user_id=${encodeURIComponent(userId)}`,
+          url: buildApiUrl(`/api/user/documents/upload?user_id=${encodeURIComponent(userId)}`),
           filePath: file.path,
           name: 'file',
           header: {
