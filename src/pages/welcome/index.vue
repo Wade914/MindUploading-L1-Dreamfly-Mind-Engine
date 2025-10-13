@@ -42,6 +42,7 @@
 
 <script setup>
 import { onMounted } from 'vue'
+import authManager from '@/utils/auth.js'
 
 const handleStartClick = () => {
   uni.navigateTo({
@@ -57,6 +58,17 @@ const goToExplore = () => {
 
 onMounted(() => {
   console.log('Welcome page mounted')
+
+  // 检查用户是否已登录
+  if (authManager.isLoggedIn()) {
+    console.log('用户已登录，自动跳转到意识体控制台')
+    // 使用 redirectTo 替换当前页面，防止用户返回到欢迎页
+    uni.redirectTo({
+      url: '/pages/consciousness/index'
+    })
+  } else {
+    console.log('用户未登录，显示欢迎页面')
+  }
 })
 </script>
 
