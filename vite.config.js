@@ -29,12 +29,13 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       host: '0.0.0.0', // ← 关键：允许外部访问
-      proxy: {
-        '/api': {
-          target: isProd ? 'http://8.129.25.16:8000' : 'http://localhost:8000',
-          changeOrigin: true,
-        }
-      }
+      // 注释掉proxy配置，因为已经有Nginx反向代理了
+      // proxy: {
+      //   '/api': {
+      //     target: isProd ? 'http://8.129.25.16:8000' : 'http://localhost:8000',
+      //     changeOrigin: true,
+      //   }
+      // }
     }
   }
 })
