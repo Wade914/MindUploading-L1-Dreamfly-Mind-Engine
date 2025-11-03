@@ -25,15 +25,16 @@ async def upload_file(
 ) -> dict:
     """
     上传文件
-    
+
     - **file**: 上传的文件
     - **user_id**: 用户ID
-    - **upload_type**: 上传类型 (thought/voice/image)
-    
+    - **upload_type**: 上传类型 (thought/voice/image/video)
+
     文件大小限制：
     - 思想数据: 5MB
     - 声音数据: 10MB
     - 形象数据: 20MB
+    - 视频数据: 50MB
     """
     params = UploadParams(user_id=user_id, upload_type=upload_type)
     service = UploadService(db)

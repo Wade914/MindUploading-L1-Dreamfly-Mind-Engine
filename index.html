@@ -9,7 +9,46 @@
         '<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0' +
         (coverSupport ? ', viewport-fit=cover' : '') + '" />')
     </script>
-    <title></title>
+        <title>云己网-意识上传平台_为全球80亿人口提供意识数字化存储服务</title>
+        <meta name="keywords" content="云己网,意识上传平台,生生科技,意识数字化,人类意识存储,意识上传技术,数字永生服务">
+        <meta name="description" content="云己网是生生科技研发的专业意识上传平台，提供安全可靠的人类意识数字化存储服务，依托尖端意识上传技术，助力实现数字永生，开启意识数据化新时代。">
+    <!-- Font Awesome 图标库 -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#4F46E5',
+              secondary: '#818CF8',
+              dark: '#1F2937',
+              light: '#F9FAFB'
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+            },
+          },
+        }
+      }
+    </script>
+    <style type="text/tailwindcss">
+      @layer base {
+        /* 统一根字体大小，避免整体“放大”感；原HTML接近14px */
+        html { font-size: 14px; }
+        body { @apply text-gray-800; }
+      }
+      @layer utilities {
+        .content-auto { content-visibility: auto; }
+        .bg-gradient-custom { background: linear-gradient(135deg, #4F46E5 0%, #818CF8 100%); }
+        .text-shadow { text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+        .transition-custom { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hover-scale { transition: transform 0.3s ease; }
+        .hover-scale:hover { transform: scale(1.02); }
+      }
+    
+    </style>
     <!--preload-links-->
     <!--app-context-->
   </head>

@@ -9,7 +9,7 @@ import json
 from datetime import datetime
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text
 from fastapi import HTTPException, status
 from core.exception import UnicornException
 from cfg.config import settings
@@ -75,6 +75,9 @@ class MindService:
         self.db.add(mind)
         await self.db.flush()
         await self.db.refresh(mind)
+
+        # 同步数据到 user_profiles 表
+        await self._sync_to_user_profile(params.user_id, params.mind_content)
 
         return CreateMindResponseSchema(
             mind_id=mind.id,
@@ -187,3 +190,66 @@ class MindService:
         await self.db.commit()
 
         return {"deleted_id": mind_id, "filename": mind.filename}
+
+    async def _sync_to_user_profile(self, user_id: str, mind_content: str):
+        """同步 mind 数据到 user_profiles 表"""
+        try:
+            # 解析 mind 内容 (JSON 格式)
+            mind_data = json.loads(mind_content)
+
+            # 提取基本信息
+            metadata = mind_data.get('metadata', {})
+            memory = mind_data.get('memory', {})
+
+            name = metadata.get('name', '')
+            birth = metadata.get('birth', '')
+            self_cognition = memory.get('self_cognition', '')
+
+            # 确保 user_profiles 记录存在
+            check_sql = "SELECT id FROM user_profiles WHERE user_id = :user_id"
+            result = await self.db.execute(text(check_sql), {"user_id": user_id})
+            profile_exists = result.fetchone() is not None
+
+            if not profile_exists:
+                # 创建 user_profiles 记录
+                insert_sql = """
+                INSERT INTO user_profiles (user_id, bio, created_at, updated_at)
+                VALUES (:user_id, :bio, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """
+                await self.db.execute(text(insert_sql), {
+                    "user_id": user_id,
+                    "bio": self_cognition[:500] if self_cognition else ''  # 限制长度
+                })
+            else:
+                # 更新 user_profiles 记录 (只更新为空的字段)
+                update_sql = """
+                UPDATE user_profiles
+                SET bio = CASE WHEN bio IS NULL OR bio = '' THEN :bio ELSE bio END,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = :user_id
+                """
+                await self.db.execute(text(update_sql), {
+                    "user_id": user_id,
+                    "bio": self_cognition[:500] if self_cognition else ''
+                })
+
+            # 更新 users 表的 birth 字段 (如果为空)
+            if birth:
+                update_user_sql = """
+                UPDATE users
+                SET birth = CASE WHEN birth IS NULL OR birth = '' THEN :birth ELSE birth END
+                WHERE id = :user_id
+                """
+                await self.db.execute(text(update_user_sql), {
+                    "user_id": user_id,
+                    "birth": birth
+                })
+
+            await self.db.commit()
+
+        except json.JSONDecodeError:
+            # 如果 mind_content 不是有效的 JSON,忽略同步
+            print(f"Mind content is not valid JSON, skipping sync for user {user_id}")
+        except Exception as e:
+            # 同步失败不影响 mind 创建,只记录错误
+            print(f"Failed to sync mind data to user_profile: {str(e)}")

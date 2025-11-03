@@ -10,10 +10,10 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
-# 数据库配置优先顺序：.env -> 环境变量 -> 默认(pybackend/dreamfly.db)
+# 数据库配置优先顺序：.env -> 环境变量 -> 默认(dreamfly.db)
 from cfg.config import settings
 
-_default_url = "sqlite+aiosqlite:///./pybackend/dreamfly.db"
+_default_url = "sqlite+aiosqlite:///./dreamfly.db"
 DATABASE_URL = settings.DATABASE_URL or os.getenv("DATABASE_URL") or _default_url
 
 # 创建异步引擎

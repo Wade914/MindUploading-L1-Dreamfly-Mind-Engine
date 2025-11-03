@@ -14,6 +14,7 @@ class UploadType(str, Enum):
     THOUGHT = "thought"  # 思想数据
     VOICE = "voice"      # 声音数据
     IMAGE = "image"      # 形象数据
+    VIDEO = "video"      # 视频数据
 
 
 class UploadParams(BaseModel):

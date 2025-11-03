@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     UPLOAD_THOUGHT_DIR: str = "thought"
     UPLOAD_VOICE_DIR: str = "voice"
     UPLOAD_IMAGE_DIR: str = "image"
+    UPLOAD_VIDEO_DIR: str = "video"
     UPLOAD_DOCUMENT_DIR: str = "documents"
 
     # 文件大小限制配置
@@ -43,12 +44,14 @@ class Settings(BaseSettings):
     MAX_THOUGHT_SIZE: int = 5242880  # 5MB
     MAX_VOICE_SIZE: int = 10485760  # 10MB
     MAX_IMAGE_SIZE: int = 20971520  # 20MB
+    MAX_VIDEO_SIZE: int = 52428800  # 50MB
     MAX_DOCUMENT_SIZE: int = 10485760  # 10MB
 
     # 允许的文件类型
     ALLOWED_THOUGHT_TYPES: list = ['.txt', '.md', '.doc', '.docx', '.pdf']
     ALLOWED_VOICE_TYPES: list = ['.mp3', '.wav', '.m4a', '.aac']
     ALLOWED_IMAGE_TYPES: list = ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
+    ALLOWED_VIDEO_TYPES: list = ['.mp4', '.webm', '.ogg', '.mov', '.avi']
     ALLOWED_DOCUMENT_TYPES: list = ['.txt', '.pdf', '.doc', '.docx', '.md']
 
     # CORS配置

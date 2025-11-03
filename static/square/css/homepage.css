@@ -1,0 +1,300 @@
+/* 个人主页样式 */
+
+/* 个人资料头部 */
+.profile-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.profile-header .container {
+    position: relative;
+    z-index: 2;
+}
+
+/* 封面渐变样式 */
+.cover-gradient-1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.cover-gradient-2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.cover-gradient-3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.cover-gradient-4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+.cover-gradient-5 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+
+/* 个人资料卡片 */
+.profile-card {
+    transform: translateY(-3rem);
+    margin-bottom: -3rem;
+}
+
+.profile-avatar {
+    border: 4px solid white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 生命天数展示 */
+.life-counter {
+    background: linear-gradient(135deg, #667eea 20%, #764ba2 100%);
+    color: white;
+    text-align: center;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.life-counter .count {
+    font-size: 3rem;
+    font-weight: bold;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 思想元胞列表 */
+.thought-cell {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.thought-cell:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.thought-cell-header {
+    padding: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.thought-cell-content {
+    padding: 1rem;
+    line-height: 1.7;
+}
+
+.thought-cell-footer {
+    padding: 1rem;
+    border-top: 1px solid #f0f0f0;
+    background: #fafafa;
+}
+
+/* 思想元胞操作按钮 */
+.thought-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.thought-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: #65676b;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+}
+
+.thought-action-btn:hover {
+    background: #f0f2f5;
+    color: var(--primary-color);
+}
+
+.thought-action-btn.active {
+    color: var(--primary-color);
+    background: rgba(24, 119, 242, 0.1);
+}
+
+/* 引用样式 */
+.thought-quote {
+    background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+    border-left: 4px solid var(--primary-color);
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    position: relative;
+}
+
+.thought-quote::before {
+    content: '"';
+    font-size: 2rem;
+    color: var(--primary-color);
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    opacity: 0.5;
+}
+
+/* 标签样式 */
+.tag {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin: 0.25rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.tag:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* 里程碑时间线 */
+.milestone-timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.milestone-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--primary-color), #e0e0e0);
+}
+
+.milestone-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.milestone-item::before {
+    content: '';
+    position: absolute;
+    left: -1.75rem;
+    top: 1rem;
+    width: 12px;
+    height: 12px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+/* 发布框样式 */
+.publish-box {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.publish-textarea {
+    border: none;
+    outline: none;
+    resize: none;
+    font-size: 1rem;
+    line-height: 1.5;
+    background: #f8f9fa;
+    border-radius: 20px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.publish-textarea:focus {
+    background: white;
+    box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2);
+}
+
+.publish-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.publish-tools {
+    display: flex;
+    gap: 1rem;
+}
+
+.publish-tool {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    color: #65676b;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+}
+
+.publish-tool:hover {
+    background: #f0f2f5;
+    color: var(--primary-color);
+}
+
+/* 空状态样式 */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #65676b;
+}
+
+.empty-state-icon {
+    width: 4rem;
+    height: 4rem;
+    background: #f0f2f5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    color: #bcc0c4;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .profile-header {
+        text-align: center;
+    }
+    
+    .life-counter .count {
+        font-size: 2rem;
+    }
+    
+    .thought-actions {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .publish-actions {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .publish-tools {
+        justify-content: center;
+    }
+}

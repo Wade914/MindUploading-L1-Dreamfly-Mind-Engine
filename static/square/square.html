@@ -1,0 +1,2302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>云己 - 广场</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#818CF8',
+                        dark: '#1F2937',
+                        light: '#F9FAFB'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .bg-gradient-custom {
+                background: linear-gradient(135deg, #4F46E5 0%, #818CF8 100%);
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            .transition-custom {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .hover-scale {
+                transition: transform 0.3s ease;
+            }
+            .hover-scale:hover {
+                transform: scale(1.02);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 加载指示器 -->
+    <div id="loading-indicator" style="display: none;" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 flex flex-col items-center">
+            <i class="fa fa-spinner fa-spin text-4xl text-primary mb-3"></i>
+            <p class="text-gray-700">加载中...</p>
+        </div>
+    </div>
+
+    <!-- 顶部导航栏 -->
+    <header class="sticky top-0 z-50 bg-white shadow-sm">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <!-- 左侧Logo -->
+                <div class="flex items-center space-x-4">
+                    <a href="javascript:navigateTo('square')" class="text-2xl font-bold text-primary hover:opacity-80 transition-custom">
+                        云己
+                        <span class="text-dark">UpMe</span>
+                    </a>
+                    
+                    <!-- 导航菜单 - 桌面端 -->
+                    <nav class="hidden md:flex items-center space-x-6">
+                        <a href="javascript:navigateTo('square')" class="text-primary font-medium">广场</a>
+                        <a href="#" class="text-gray-600 hover:text-primary transition-custom">探索</a>
+                        <a href="javascript:navigateTo('following')" class="text-gray-600 hover:text-primary transition-custom">关注</a>
+                        <a href="javascript:navigateTo('messages')" class="text-gray-600 hover:text-primary transition-custom">消息</a>
+                    </nav>
+                </div>
+                
+                <!-- 右侧工具栏 -->
+                <div class="flex items-center space-x-4">
+                    <!-- 搜索框 -->
+                    <div class="relative hidden md:block">
+                        <input 
+                            type="text" 
+                            placeholder="搜索思想元胞、用户或话题..." 
+                            class="pl-10 pr-4 py-2 w-64 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white transition-custom"
+                        >
+                        <i class="fa fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                    
+                    <!-- 发布按钮 -->
+                    <button id="publish-btn" class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-6 rounded-full flex items-center transition-custom">
+                        <i class="fa fa-pencil-square-o mr-2"></i> 发布
+                    </button>
+                    
+                    <!-- 用户头像 -->
+                    <div class="relative">
+                        <button class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary focus:outline-none">
+                            <img
+                                id="header-user-avatar"
+                                src="https://picsum.photos/seed/user123/200/200"
+                                alt="用户头像"
+                                class="w-full h-full object-cover"
+                            >
+                        </button>
+                    </div>
+                    
+                    <!-- 移动端菜单按钮 -->
+                    <button class="md:hidden text-gray-600 hover:text-primary">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- 左侧边栏 -->
+            <aside class="lg:w-1/4 lg:sticky lg:top-24 lg:self-start">
+                <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+                    <!-- 用户信息卡片 -->
+                    <div class="text-center">
+                        <div class="relative w-24 h-24 mx-auto mb-4">
+                            <div class="absolute inset-0 bg-gradient-custom rounded-full opacity-20 animate-pulse"></div>
+                            <img
+                                id="sidebar-user-avatar"
+                                src="https://picsum.photos/seed/user123/200/200"
+                                alt="用户头像"
+                                class="w-full h-full object-cover rounded-full border-4 border-white"
+                            >
+                        </div>
+                        <h2 id="sidebar-user-name" class="text-xl font-bold text-gray-900 mb-1">加载中...</h2>
+                        <p id="sidebar-user-bio" class="text-gray-500 mb-4">数字生命探索者</p>
+                        <div class="flex justify-center space-x-2 text-sm text-gray-500 mb-4">
+                            <span class="flex items-center"><i class="fa fa-users mr-1 text-primary"></i> <span id="sidebar-following-count">0</span> 关注</span>
+                            <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <span class="flex items-center"><i class="fa fa-user mr-1 text-primary"></i> <span id="sidebar-followers-count">0</span> 粉丝</span>
+                        </div>
+                        <a href="javascript:navigateTo('homepage')" class="block w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 rounded-lg transition-custom">
+                            查看个人主页
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+                    <!-- 推荐关注 -->
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">推荐关注</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <a href="javascript:navigateTo('profile')" class="flex items-center space-x-3 flex-1 hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg transition-custom">
+                                <img
+                                    src="https://picsum.photos/seed/jobs3/100/100"
+                                    alt="史蒂夫·乔布斯"
+                                    class="w-10 h-10 rounded-full object-cover"
+                                >
+                                <div>
+                                    <p class="font-medium text-gray-900">史蒂夫·乔布斯</p>
+                                    <p class="text-xs text-gray-500">Apple 创始人</p>
+                                </div>
+                            </a>
+                            <button class="text-primary hover:text-secondary font-medium text-sm transition-custom">
+                                关注
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <a href="javascript:navigateTo('wittgenstein')" class="flex items-center space-x-3 flex-1 hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg transition-custom">
+                                <img
+                                    src="https://picsum.photos/seed/witt1/100/100"
+                                    alt="维特根斯坦"
+                                    class="w-10 h-10 rounded-full object-cover"
+                                >
+                                <div>
+                                    <p class="font-medium text-gray-900">维特根斯坦</p>
+                                    <p class="text-xs text-gray-500">哲学家</p>
+                                </div>
+                            </a>
+                            <button class="text-primary hover:text-secondary font-medium text-sm transition-custom">
+                                关注
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <a href="javascript:navigateTo('profile')" class="flex items-center space-x-3 flex-1 hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg transition-custom">
+                                <img
+                                    src="https://picsum.photos/seed/user456/100/100"
+                                    alt="李华"
+                                    class="w-10 h-10 rounded-full object-cover"
+                                >
+                                <div>
+                                    <p class="font-medium text-gray-900">李华</p>
+                                    <p class="text-xs text-gray-500">AI 研究员</p>
+                                </div>
+                            </a>
+                            <button class="text-primary hover:text-secondary font-medium text-sm transition-custom">
+                                关注
+                            </button>
+                        </div>
+                    </div>
+                    <button class="w-full text-center text-primary hover:text-secondary font-medium text-sm mt-4 transition-custom">
+                        查看更多
+                    </button>
+                </div>
+            </aside>
+
+            <!-- 中间内容区 -->
+            <div class="lg:w-2/4">
+                <!-- 发布框 -->
+                <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+                    <div class="flex space-x-4">
+                        <img
+                            id="post-input-user-avatar"
+                            src="https://picsum.photos/seed/user123/200/200"
+                            alt="用户头像"
+                            class="w-10 h-10 rounded-full object-cover"
+                        >
+                        <div class="flex-1">
+                            <textarea
+                                id="quick-post-input"
+                                placeholder="分享你的思想元胞..."
+                                rows="1"
+                                class="w-full px-4 py-3 rounded-2xl bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white transition-custom resize-none"
+                                style="min-height: 48px; max-height: 200px;"
+                            ></textarea>
+
+                            <!-- 图片预览区域 -->
+                            <div id="image-preview-container" class="hidden mt-3 grid grid-cols-3 gap-2"></div>
+
+                            <!-- 视频预览区域 -->
+                            <div id="video-preview-container" class="hidden mt-3"></div>
+
+                            <!-- 链接预览区域 -->
+                            <div id="link-preview-container" class="hidden mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <div class="flex items-start space-x-3">
+                                    <i class="fa fa-link text-primary text-xl mt-1"></i>
+                                    <div class="flex-1">
+                                        <input
+                                            id="link-input"
+                                            type="url"
+                                            placeholder="输入链接地址..."
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                                        >
+                                    </div>
+                                    <button id="remove-link-btn" class="text-gray-400 hover:text-red-500 transition-custom">
+                                        <i class="fa fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between mt-4">
+                                <div class="flex space-x-4">
+                                    <!-- 隐藏的文件输入框 -->
+                                    <input type="file" id="image-upload-input" accept="image/*" multiple class="hidden">
+                                    <input type="file" id="video-upload-input" accept="video/*" class="hidden">
+
+                                    <button id="image-upload-btn" class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                        <i class="fa fa-picture-o text-xl mr-1"></i>
+                                        <span>图片</span>
+                                    </button>
+                                    <button id="video-upload-btn" class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                        <i class="fa fa-video-camera text-xl mr-1"></i>
+                                        <span>视频</span>
+                                    </button>
+                                    <button id="link-add-btn" class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                        <i class="fa fa-link text-xl mr-1"></i>
+                                        <span>链接</span>
+                                    </button>
+                                </div>
+                                <button id="quick-post-btn" class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-6 rounded-full transition-custom disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                    发布
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 动态内容列表 -->
+                <div class="space-y-6">
+                    <!-- 云己使用指南思想元胞 -->
+                    <article class="bg-white rounded-2xl shadow-sm p-6 hover-scale border-2 border-primary">
+                        <div class="flex items-start space-x-4 mb-4">
+                            <a href="javascript:navigateTo('homepage')" class="flex-shrink-0">
+                                <img
+                                    src="https://picsum.photos/seed/upme/100/100"
+                                    alt="云己官方"
+                                    class="w-10 h-10 rounded-full object-cover border-2 border-primary hover:ring-2 hover:ring-primary transition-custom cursor-pointer"
+                                >
+                            </a>
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <a href="javascript:navigateTo('homepage')" class="hover:text-primary transition-custom">
+                                        <h3 class="font-bold text-gray-900">云己官方</h3>
+                                    </a>
+                                    <span class="text-primary text-sm">使用指南</span>
+                                </div>
+                                <p class="text-sm text-gray-500">欢迎来到云己 · 数字永生的开始</p>
+                            </div>
+                            <button class="ml-auto text-gray-400 hover:text-gray-600 transition-custom">
+                                <i class="fa fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                        <div class="mb-4">
+                            <h2 class="text-xl font-bold text-gray-900 mb-3">云己使用指南</h2>
+                            <p class="text-gray-800 mb-3">
+                                欢迎加入云己！这是一个帮助你记录思想、构建数字意识体的平台。以下是快速上手指南：
+                            </p>
+                            <div class="bg-blue-50 p-4 rounded-xl mb-4">
+                                <ul class="list-disc pl-5 space-y-2">
+                                    <li><strong>1. 创建你的第一个思想元胞</strong> - 点击上方的"发布"按钮，分享你的想法和思考</li>
+                                    <li><strong>2. 完善个人资料</strong> - 点击右上角头像进入个人主页，上传头像、填写简介</li>
+                                    <li><strong>3. 探索广场</strong> - 浏览和发现其他用户的精彩思想元胞</li>
+                                    <li><strong>4. 关注感兴趣的用户</strong> - 及时获取他们的最新动态</li>
+                                    <li><strong>5. 查看你的人生数据库</strong> - 记录和追踪你的成长历程</li>
+                                </ul>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 rounded-xl overflow-hidden mb-4">
+                                <img 
+                                    src="https://picsum.photos/seed/guide1/300/200" 
+                                    alt="创建思想元胞" 
+                                    class="w-full h-32 object-cover"
+                                >
+                                <img 
+                                    src="https://picsum.photos/seed/guide2/300/200" 
+                                    alt="完善个人资料" 
+                                    class="w-full h-32 object-cover"
+                                >
+                                <img 
+                                    src="https://picsum.photos/seed/guide3/300/200" 
+                                    alt="探索广场" 
+                                    class="w-full h-32 object-cover"
+                                >
+                            </div>
+                            <div class="flex items-center space-x-2 text-sm text-gray-500">
+                                <a href="#" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition-custom">#使用指南</a>
+                                <a href="#" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition-custom">#云己入门</a>
+                                <a href="#" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition-custom">#数字永生</a>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-100 pt-4 flex justify-between items-center">
+                            <div class="flex space-x-6">
+                                <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                    <i class="fa fa-heart-o mr-2"></i>
+                                    <span>5.6k</span>
+                                </button>
+                                <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                    <i class="fa fa-comment-o mr-2"></i>
+                                    <span>432</span>
+                                </button>
+                                <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                    <i class="fa fa-share-alt mr-2"></i>
+                                    <span>123</span>
+                                </button>
+                            </div>
+                            <button class="text-gray-500 hover:text-primary transition-custom">
+                                <i class="fa fa-bookmark-o"></i>
+                            </button>
+                        </div>
+                    </article>
+
+                    <!-- 动态加载的思想元胞将显示在这里 -->
+
+                    <!-- 加载更多 -->
+                    <div class="text-center py-4">
+                        <button class="text-primary hover:text-secondary font-medium transition-custom">
+                            加载更多
+                            <i class="fa fa-angle-down ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧边栏 -->
+            <aside class="lg:w-1/4">
+                <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+                    <!-- 热门话题 -->
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">热门话题</h3>
+                    <div class="space-y-3">
+                        <a href="#" class="block p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-custom">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="text-sm text-gray-500">#数字永生</span>
+                                <span class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">热门</span>
+                            </div>
+                            <p class="font-medium text-gray-900">探索人类意识如何在数字世界中永存</p>
+                            <p class="text-xs text-gray-500 mt-1">12.5k 讨论</p>
+                        </a>
+                        <a href="#" class="block p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-custom">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="text-sm text-gray-500">#思想元胞</span>
+                                <span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">新</span>
+                            </div>
+                            <p class="font-medium text-gray-900">记录和分享你的核心思想片段</p>
+                            <p class="text-xs text-gray-500 mt-1">8.2k 讨论</p>
+                        </a>
+                        <a href="#" class="block p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-custom">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="text-sm text-gray-500">#AI伦理</span>
+                            </div>
+                            <p class="font-medium text-gray-900">人工智能发展带来的伦理挑战</p>
+                            <p class="text-xs text-gray-500 mt-1">6.7k 讨论</p>
+                        </a>
+                    </div>
+                    <button class="w-full text-center text-primary hover:text-secondary font-medium text-sm mt-4 transition-custom">
+                        查看全部
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm p-6">
+                    <!-- 推荐内容 -->
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">推荐内容</h3>
+                    <div class="space-y-4">
+                        <a href="#" class="block group">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                                    <img 
+                                        src="https://picsum.photos/seed/podcast/200/200" 
+                                        alt="播客" 
+                                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                    >
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900 group-hover:text-primary transition-custom">数字永生的未来展望</h4>
+                                    <p class="text-xs text-gray-500 mt-1">云己播客 · 45分钟</p>
+                                    <p class="text-xs text-gray-500 mt-1">12.3k 播放</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="#" class="block group">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                                    <img 
+                                        src="https://picsum.photos/seed/article/200/200" 
+                                        alt="文章" 
+                                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                    >
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900 group-hover:text-primary transition-custom">思想元胞：构建个人数字意识体的基石</h4>
+                                    <p class="text-xs text-gray-500 mt-1">云己研究院 · 5分钟阅读</p>
+                                    <p class="text-xs text-gray-500 mt-1">8.7k 阅读</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="#" class="block group">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                                    <img 
+                                        src="https://picsum.photos/seed/event/200/200" 
+                                        alt="活动" 
+                                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                    >
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900 group-hover:text-primary transition-custom">2023数字生命峰会</h4>
+                                    <p class="text-xs text-gray-500 mt-1">线上 · 10月15日</p>
+                                    <p class="text-xs text-gray-500 mt-1">3.5k 人已报名</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <button class="w-full text-center text-primary hover:text-secondary font-medium text-sm mt-4 transition-custom">
+                        发现更多
+                    </button>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-12 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h4 class="text-xl font-bold mb-4">云己 UpMe</h4>
+                    <p class="text-gray-400 mb-4">
+                        数字永生的基础设施，让每个人的思想、记忆和意识超越时间的限制。
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-custom">
+                            <i class="fa fa-weixin text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-custom">
+                            <i class="fa fa-weibo text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-custom">
+                            <i class="fa fa-github text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-custom">
+                            <i class="fa fa-twitter text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                <div>
+                    <h5 class="font-bold text-lg mb-4">产品</h5>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">思想元胞</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">意识体</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">人生数据库</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">星火墙</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">开放API</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="font-bold text-lg mb-4">公司</h5>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">关于我们</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">团队</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">合作伙伴</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">加入我们</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">联系方式</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="font-bold text-lg mb-4">资源</h5>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">帮助中心</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">开发者文档</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">隐私政策</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">服务条款</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">社区论坛</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500">
+                <p>© 2023 云己科技有限公司 版权所有</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 发布思想元胞弹窗 -->
+    <div id="publish-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <!-- 弹窗头部 -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-900">发布思想元胞</h2>
+                <button id="close-publish-modal" class="text-gray-400 hover:text-gray-600 transition-custom">
+                    <i class="fa fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <!-- 弹窗内容 -->
+            <div class="p-6">
+                <form id="publish-form">
+                    <!-- 内容输入框 -->
+                    <div class="mb-4">
+                        <textarea
+                            id="thought-content"
+                            rows="6"
+                            placeholder="分享你的思想..."
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                            maxlength="5000"
+                            required
+                        ></textarea>
+                        <div class="flex justify-between items-center mt-2">
+                            <span class="text-sm text-gray-500">
+                                <span id="content-length">0</span> / 5000
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- 图片上传（可选） -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">图片（可选）</label>
+                        <input
+                            type="text"
+                            id="thought-image"
+                            placeholder="输入图片 URL..."
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">暂时只支持输入图片链接</p>
+                    </div>
+
+                    <!-- 可见性选择 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">可见性</label>
+                        <select
+                            id="thought-visibility"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        >
+                            <option value="public">公开</option>
+                            <option value="friends">仅好友</option>
+                            <option value="private">私密</option>
+                        </select>
+                    </div>
+
+                    <!-- 话题标签输入 -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">添加话题（可选）</label>
+
+                        <!-- 已选择的话题标签 -->
+                        <div id="selected-tags" class="flex flex-wrap gap-2 mb-3 min-h-[32px]">
+                            <!-- 动态添加的标签会显示在这里 -->
+                        </div>
+
+                        <!-- 话题输入框 -->
+                        <div class="relative">
+                            <input
+                                type="text"
+                                id="thought-tags-input"
+                                placeholder="输入话题后按回车添加，例如：使用指南"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            >
+                            <span class="absolute right-3 top-2.5 text-gray-400 text-sm">按回车添加</span>
+                        </div>
+
+                        <!-- 热门话题建议 -->
+                        <div class="mt-3">
+                            <p class="text-xs text-gray-500 mb-2">热门话题：</p>
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" class="hot-tag-btn text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full hover:bg-blue-100 transition-custom" data-tag="使用指南">
+                                    #使用指南
+                                </button>
+                                <button type="button" class="hot-tag-btn text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full hover:bg-blue-100 transition-custom" data-tag="云己入门">
+                                    #云己入门
+                                </button>
+                                <button type="button" class="hot-tag-btn text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full hover:bg-blue-100 transition-custom" data-tag="数字永生">
+                                    #数字永生
+                                </button>
+                                <button type="button" class="hot-tag-btn text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full hover:bg-blue-100 transition-custom" data-tag="意识上传">
+                                    #意识上传
+                                </button>
+                                <button type="button" class="hot-tag-btn text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full hover:bg-blue-100 transition-custom" data-tag="AI">
+                                    #AI
+                                </button>
+                                <button type="button" class="hot-tag-btn text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full hover:bg-blue-100 transition-custom" data-tag="哲学">
+                                    #哲学
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 隐藏的输入框，用于存储最终的标签数据 -->
+                        <input type="hidden" id="thought-tags" value="">
+                    </div>
+
+                    <!-- 提交按钮 -->
+                    <div class="flex justify-end space-x-3">
+                        <button
+                            type="button"
+                            id="cancel-publish"
+                            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-custom"
+                        >
+                            取消
+                        </button>
+                        <button
+                            type="submit"
+                            id="submit-publish"
+                            class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-custom"
+                        >
+                            <i class="fa fa-paper-plane mr-2"></i>发布
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载时的调试信息
+
+
+        // 动态加载思想元胞数据
+        async function loadThoughtCells(page = 1) {
+            try {
+                // 显示加载状态
+                showLoading();
+
+                // 获取当前用户信息
+                const token = localStorage.getItem('auth_token');
+                if (!token) {
+                    console.warn('未登录,无法加载思想元胞');
+                    hideLoading();
+                    showToast('请先登录', 'warning');
+                    return;
+                }
+
+                // 解析 token 获取用户 ID
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const currentUserId = payload.user_id;
+
+                const response = await fetch(`${API_BASE_URL}/api/square/thoughts?current_user_id=${currentUserId}&page=${page}&page_size=20`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.code === 200 && result.data && result.data.thoughts) {
+                    renderThoughtCells(result.data.thoughts, page);
+
+                    // 更新"加载更多"按钮状态
+                    updateLoadMoreButton(result.data.has_more);
+                } else {
+                    throw new Error(result.message || '加载失败');
+                }
+
+                hideLoading();
+            } catch (error) {
+                console.error('加载思想元胞失败:', error);
+                hideLoading();
+                showToast('加载失败: ' + error.message, 'error');
+            }
+        }
+
+        // 渲染思想元胞
+        function renderThoughtCells(thoughts, page = 1) {
+            const container = document.querySelector('.space-y-6');
+            const guideCard = container.querySelector('article.border-primary'); // 获取引导卡片
+            const loadMoreBtn = container.querySelector('.text-center.py-4'); // 获取"加载更多"按钮
+
+            // 如果是第一页且没有思想元胞，显示引导卡片
+            if (page === 1 && thoughts.length === 0) {
+                if (guideCard) guideCard.style.display = 'block';
+                return;
+            }
+
+            // 隐藏引导卡片
+            if (guideCard) guideCard.style.display = 'none';
+
+            // 如果是第一页，清空现有内容（保留引导卡片和加载更多按钮）
+            if (page === 1) {
+                const existingThoughts = container.querySelectorAll('article:not(.border-primary)');
+                existingThoughts.forEach(thought => thought.remove());
+            }
+
+            // 添加新的思想元胞（插入到"加载更多"按钮之前）
+            thoughts.forEach(thought => {
+                const thoughtElement = createThoughtCellElement(thought);
+
+                // 如果有"加载更多"按钮，插入到它之前；否则直接添加到容器末尾
+                if (loadMoreBtn) {
+                    container.insertBefore(thoughtElement, loadMoreBtn);
+                } else {
+                    container.appendChild(thoughtElement);
+                }
+
+                // 绑定评论输入框事件
+                setupCommentInput(thought.id);
+            });
+
+            // 重新绑定点赞、评论、收藏和关注按钮事件
+            setupLikeButtons();
+            setupCommentButtons();
+            setupBookmarkButtons();
+            setupFollowButtons();
+        }
+
+        // 设置评论输入框事件
+        function setupCommentInput(thoughtId) {
+            const commentInput = document.getElementById(`comment-input-${thoughtId}`);
+            const submitBtn = document.getElementById(`submit-comment-btn-${thoughtId}`);
+            const charCount = document.getElementById(`comment-char-count-${thoughtId}`);
+
+            if (commentInput && submitBtn && charCount) {
+                commentInput.addEventListener('input', function() {
+                    const length = this.value.length;
+                    charCount.textContent = `${length}/500`;
+                    submitBtn.disabled = length === 0 || length > 500;
+                });
+
+                submitBtn.addEventListener('click', function() {
+                    submitCommentInline(thoughtId);
+                });
+            }
+        }
+
+        // 创建思想元胞元素
+        function createThoughtCellElement(thought) {
+            const article = document.createElement('article');
+            article.className = 'bg-white rounded-2xl shadow-sm p-6 hover-scale';
+            article.dataset.thoughtId = thought.id;  // 保存思想元胞 ID
+
+            // 后端返回的数据结构：username, avatar_url, tags 等
+            const username = thought.username || '匿名用户';
+            const avatarUrl = thought.avatar_url || `https://picsum.photos/seed/user${thought.id}/100/100`;
+            const tags = thought.tags || [];
+            const isLiked = thought.is_liked || false;
+            const isFollowing = thought.is_following || false;
+            const isBookmarked = thought.is_bookmarked || false;
+
+            // 获取当前用户ID
+            const token = localStorage.getItem('auth_token');
+            let currentUserId = null;
+            if (token) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    currentUserId = payload.user_id;
+                } catch (e) {}
+            }
+
+            // 判断是否是自己的思想元胞
+            const isOwnThought = currentUserId && currentUserId === thought.user_id;
+
+            article.innerHTML = `
+                <div class="flex items-start space-x-4 mb-4">
+                    <img
+                        src="${avatarUrl}"
+                        alt="${username}"
+                        class="w-10 h-10 rounded-full object-cover flex-shrink-0 cursor-pointer"
+                        onclick="navigateTo('homepage')"
+                    >
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2">
+                            <h3 class="font-bold text-gray-900 cursor-pointer hover:text-primary" onclick="navigateTo('homepage')">${username}</h3>
+                            <span class="text-primary text-sm">思想元胞</span>
+                        </div>
+                        <p class="text-sm text-gray-500">${formatDate(thought.created_at)}</p>
+                    </div>
+                    ${!isOwnThought ? `
+                        <button
+                            class="follow-btn ml-auto px-4 py-1.5 rounded-full text-sm font-medium transition-custom ${isFollowing ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-primary text-white hover:bg-primary/90'}"
+                            data-user-id="${thought.user_id}"
+                            data-username="${username}"
+                            data-is-following="${isFollowing}"
+                        >
+                            ${isFollowing ? '已关注' : '+ 关注'}
+                        </button>
+                    ` : `
+                        <button class="ml-auto text-gray-400 hover:text-gray-600 transition-custom">
+                            <i class="fa fa-ellipsis-h"></i>
+                        </button>
+                    `}
+                </div>
+                <div class="mb-4">
+                    <p class="text-gray-800 mb-3">${escapeHtml(thought.content)}</p>
+
+                    ${thought.images && thought.images.length > 0 ? (() => {
+                        // 分离图片和视频
+                        const images = thought.images.filter(url => !url.match(/\.(mp4|webm|ogg|mov)$/i));
+                        const videos = thought.images.filter(url => url.match(/\.(mp4|webm|ogg|mov)$/i));
+
+                        let html = '';
+
+                        // 显示图片（支持多图）
+                        if (images.length > 0) {
+                            if (images.length === 1) {
+                                html += `
+                                    <div class="rounded-xl overflow-hidden mb-4">
+                                        <img src="${images[0]}" alt="思想图片" class="w-full h-auto object-contain max-h-96 cursor-pointer bg-gray-100" onclick="window.open('${images[0]}', '_blank')">
+                                    </div>
+                                `;
+                            } else if (images.length === 2) {
+                                html += `
+                                    <div class="grid grid-cols-2 gap-2 mb-4">
+                                        ${images.map(img => `<div class="rounded-lg overflow-hidden"><img src="${img}" alt="思想图片" class="w-full h-48 object-cover cursor-pointer" onclick="window.open('${img}', '_blank')"></div>`).join('')}
+                                    </div>
+                                `;
+                            } else if (images.length === 3) {
+                                html += `
+                                    <div class="grid grid-cols-3 gap-2 mb-4">
+                                        ${images.map(img => `<div class="rounded-lg overflow-hidden"><img src="${img}" alt="思想图片" class="w-full h-32 object-cover cursor-pointer" onclick="window.open('${img}', '_blank')"></div>`).join('')}
+                                    </div>
+                                `;
+                            } else {
+                                html += `
+                                    <div class="grid grid-cols-3 gap-2 mb-4">
+                                        ${images.slice(0, 9).map(img => `<div class="rounded-lg overflow-hidden"><img src="${img}" alt="思想图片" class="w-full h-32 object-cover cursor-pointer" onclick="window.open('${img}', '_blank')"></div>`).join('')}
+                                    </div>
+                                `;
+                            }
+                        }
+
+                        // 显示视频
+                        if (videos.length > 0) {
+                            html += `
+                                <div class="rounded-xl overflow-hidden mb-4">
+                                    <video src="${videos[0]}" controls class="w-full h-auto max-h-96"></video>
+                                </div>
+                            `;
+                        }
+
+                        return html;
+                    })() : ''}
+
+                    ${thought.location ? `
+                        <div class="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa fa-link text-primary"></i>
+                                <a href="${thought.location}" target="_blank" class="text-primary hover:underline text-sm break-all">${thought.location}</a>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${tags.length > 0 ? `
+                        <div class="flex flex-wrap gap-2 mt-3">
+                            ${tags.map(tag => `<a href="#" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition-custom text-sm">#${tag}</a>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="border-t border-gray-100 pt-4 flex justify-between items-center">
+                    <div class="flex space-x-6">
+                        <button class="like-btn flex items-center text-gray-500 hover:text-red-500 transition-custom" data-thought-id="${thought.id}">
+                            <i class="fa ${isLiked ? 'fa-heart text-red-500' : 'fa-heart-o'} mr-2"></i>
+                            <span>${thought.likes_count || 0}</span>
+                        </button>
+                        <button class="comment-btn flex items-center text-gray-500 hover:text-primary transition-custom" data-thought-id="${thought.id}">
+                            <i class="fa fa-comment-o mr-2"></i>
+                            <span class="comment-count">${thought.comments_count || 0}</span>
+                        </button>
+                        <button class="share-btn flex items-center text-gray-500 hover:text-primary transition-custom">
+                            <i class="fa fa-share-alt mr-2"></i>
+                            <span>${thought.shares_count || 0}</span>
+                        </button>
+                    </div>
+                    <button class="bookmark-btn text-gray-500 hover:text-primary transition-custom">
+                        <i class="fa ${isBookmarked ? 'fa-bookmark text-yellow-500' : 'fa-bookmark-o'}"></i>
+                    </button>
+                </div>
+
+                <!-- 评论区域（默认隐藏） -->
+                <div id="comments-section-${thought.id}" class="hidden mt-4 pt-4 border-t border-gray-100">
+                    <!-- 评论列表 -->
+                    <div id="comments-list-${thought.id}" class="space-y-3 mb-4">
+                        <!-- 评论将动态加载到这里 -->
+                    </div>
+
+                    <!-- 发表评论 -->
+                    <div class="flex space-x-3 mt-4 pt-4 border-t border-gray-100">
+                        <img src="${getCurrentUserAvatar()}" alt="头像" class="w-8 h-8 rounded-full">
+                        <div class="flex-1">
+                            <textarea
+                                id="comment-input-${thought.id}"
+                                placeholder="写下你的评论..."
+                                rows="2"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-none text-sm"
+                            ></textarea>
+                            <div class="flex justify-between items-center mt-2">
+                                <span id="comment-char-count-${thought.id}" class="text-xs text-gray-500">0/500</span>
+                                <button
+                                    id="submit-comment-btn-${thought.id}"
+                                    class="px-4 py-1.5 bg-primary text-white rounded-full text-sm font-medium hover:bg-primary/90 transition-custom disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled
+                                >
+                                    发表
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            return article;
+        }
+
+        // 获取当前用户头像
+        function getCurrentUserAvatar() {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    return `https://picsum.photos/seed/${payload.user_id}/400/400`;
+                } catch (e) {
+                    return 'https://picsum.photos/seed/default/400/400';
+                }
+            }
+            return 'https://picsum.photos/seed/default/400/400';
+        }
+
+        // HTML 转义函数（防止 XSS 攻击）
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 1) return '刚刚';
+            if (minutes < 60) return `${minutes}分钟前`;
+            if (hours < 24) return `${hours}小时前`;
+            if (days < 30) return `${days}天前`;
+
+            return date.toLocaleDateString('zh-CN');
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            const loadingEl = document.getElementById('loading-indicator');
+            if (loadingEl) loadingEl.style.display = 'flex';
+        }
+
+        // 隐藏加载状态
+        function hideLoading() {
+            const loadingEl = document.getElementById('loading-indicator');
+            if (loadingEl) loadingEl.style.display = 'none';
+        }
+
+        // 显示 Toast 提示
+        function showToast(message, type = 'info') {
+            // 创建 Toast 元素
+            const toast = document.createElement('div');
+            toast.className = `fixed top-20 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white transition-all transform translate-x-0 ${
+                type === 'success' ? 'bg-green-500' :
+                type === 'error' ? 'bg-red-500' :
+                type === 'warning' ? 'bg-yellow-500' :
+                'bg-blue-500'
+            }`;
+            toast.textContent = message;
+
+            document.body.appendChild(toast);
+
+            // 3秒后自动消失
+            setTimeout(() => {
+                toast.style.transform = 'translateX(400px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // 更新"加载更多"按钮状态
+        function updateLoadMoreButton(hasMore) {
+            const loadMoreBtn = document.querySelector('.text-center.py-4 button');
+            if (!loadMoreBtn) return;
+
+            if (hasMore) {
+                loadMoreBtn.innerHTML = '加载更多 <i class="fa fa-angle-down ml-1"></i>';
+                loadMoreBtn.disabled = false;
+                loadMoreBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                loadMoreBtn.innerHTML = '没有更多内容了';
+                loadMoreBtn.disabled = true;
+                loadMoreBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // 全局变量：当前页码
+        let currentPage = 1;
+
+        // 存储上传的文件和链接
+        let uploadedImages = [];
+        let uploadedVideo = null;
+        let attachedLink = '';
+
+        // 图片上传按钮点击
+        document.getElementById('image-upload-btn').addEventListener('click', function() {
+            document.getElementById('image-upload-input').click();
+        });
+
+        // 视频上传按钮点击
+        document.getElementById('video-upload-btn').addEventListener('click', function() {
+            document.getElementById('video-upload-input').click();
+        });
+
+        // 链接添加按钮点击
+        document.getElementById('link-add-btn').addEventListener('click', function() {
+            const linkContainer = document.getElementById('link-preview-container');
+            linkContainer.classList.toggle('hidden');
+            if (!linkContainer.classList.contains('hidden')) {
+                document.getElementById('link-input').focus();
+            }
+        });
+
+        // 移除链接按钮点击
+        document.getElementById('remove-link-btn').addEventListener('click', function() {
+            document.getElementById('link-preview-container').classList.add('hidden');
+            document.getElementById('link-input').value = '';
+            attachedLink = '';
+        });
+
+        // 链接输入框变化
+        document.getElementById('link-input').addEventListener('input', function(e) {
+            attachedLink = e.target.value.trim();
+        });
+
+        // 图片文件选择
+        document.getElementById('image-upload-input').addEventListener('change', async function(e) {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+
+            // 限制最多9张图片
+            if (uploadedImages.length + files.length > 9) {
+                showToast('最多只能上传9张图片', 'warning');
+                return;
+            }
+
+            const previewContainer = document.getElementById('image-preview-container');
+            previewContainer.classList.remove('hidden');
+
+            for (const file of files) {
+                // 验证文件类型
+                if (!file.type.startsWith('image/')) {
+                    showToast(`${file.name} 不是图片文件`, 'error');
+                    continue;
+                }
+
+                // 验证文件大小（最大5MB）
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast(`${file.name} 文件过大，最大5MB`, 'error');
+                    continue;
+                }
+
+                // 上传图片
+                try {
+                    const imageUrl = await uploadImage(file);
+                    uploadedImages.push(imageUrl);
+
+                    // 添加预览
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'relative group';
+                    previewItem.innerHTML = `
+                        <img src="${imageUrl}" class="w-full h-24 object-cover rounded-lg">
+                        <button class="absolute top-1 right-1 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" onclick="removeImage('${imageUrl}')">
+                            <i class="fa fa-times text-xs"></i>
+                        </button>
+                    `;
+                    previewContainer.appendChild(previewItem);
+                } catch (error) {
+                    showToast(`上传 ${file.name} 失败: ${error.message}`, 'error');
+                }
+            }
+
+            // 清空文件输入
+            e.target.value = '';
+        });
+
+        // 视频文件选择
+        document.getElementById('video-upload-input').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // 验证文件类型
+            if (!file.type.startsWith('video/')) {
+                showToast('请选择视频文件', 'error');
+                return;
+            }
+
+            // 验证文件大小（最大50MB）
+            if (file.size > 50 * 1024 * 1024) {
+                showToast('视频文件过大，最大50MB', 'error');
+                return;
+            }
+
+            // 上传视频
+            try {
+                const videoUrl = await uploadVideo(file);
+                uploadedVideo = videoUrl;
+
+                // 显示预览
+                const previewContainer = document.getElementById('video-preview-container');
+                previewContainer.classList.remove('hidden');
+                previewContainer.innerHTML = `
+                    <div class="relative group">
+                        <video src="${videoUrl}" class="w-full rounded-lg" controls></video>
+                        <button class="absolute top-2 right-2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" onclick="removeVideo()">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                `;
+            } catch (error) {
+                showToast(`上传视频失败: ${error.message}`, 'error');
+            }
+
+            // 清空文件输入
+            e.target.value = '';
+        });
+
+        // 移除图片
+        window.removeImage = function(imageUrl) {
+            uploadedImages = uploadedImages.filter(url => url !== imageUrl);
+
+            // 重新渲染预览
+            const previewContainer = document.getElementById('image-preview-container');
+            const items = Array.from(previewContainer.children);
+            items.forEach(item => {
+                if (item.querySelector('img')?.src === imageUrl) {
+                    item.remove();
+                }
+            });
+
+            if (uploadedImages.length === 0) {
+                previewContainer.classList.add('hidden');
+            }
+        };
+
+        // 移除视频
+        window.removeVideo = function() {
+            uploadedVideo = null;
+            const previewContainer = document.getElementById('video-preview-container');
+            previewContainer.classList.add('hidden');
+            previewContainer.innerHTML = '';
+        };
+
+        // 上传图片到服务器
+        async function uploadImage(file) {
+            const token = localStorage.getItem('auth_token');
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const userId = payload.user_id;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('user_id', userId);
+            formData.append('upload_type', 'image');
+
+            const response = await fetch(`${API_BASE_URL}/api/upload`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`上传失败: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            if (result.code === 200) {
+                // 返回文件访问URL
+                return `${API_BASE_URL}/uploads/image/${result.data.saved_filename}`;
+            } else {
+                throw new Error(result.message || '上传失败');
+            }
+        }
+
+        // 上传视频到服务器
+        async function uploadVideo(file) {
+            const token = localStorage.getItem('auth_token');
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const userId = payload.user_id;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('user_id', userId);
+            formData.append('upload_type', 'video'); // 使用 video 类型
+
+            const response = await fetch(`${API_BASE_URL}/api/upload`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`上传失败: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            if (result.code === 200) {
+                // 返回文件访问URL
+                return `${API_BASE_URL}/uploads/video/${result.data.saved_filename}`;
+            } else {
+                throw new Error(result.message || '上传失败');
+            }
+        }
+
+        // 发布思想元胞功能
+        async function publishThought(thoughtData) {
+            try {
+                const token = localStorage.getItem('auth_token');
+
+                if (!token) {
+                    showToast('请先登录', 'warning');
+                    return false;
+                }
+
+                // 解析 token 获取用户 ID
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const userId = payload.user_id;
+
+                const response = await fetch(`${API_BASE_URL}/api/square/thoughts?user_id=${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(thoughtData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.code === 200) {
+                    showToast('发布成功！', 'success');
+                    return true;
+                } else {
+                    throw new Error(result.message || '发布失败');
+                }
+            } catch (error) {
+                console.error('发布失败:', error);
+                showToast('发布失败: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // 动态加载更多内容
+        document.addEventListener('DOMContentLoaded', function() {
+            // 页面加载时，加载第一页数据
+            loadThoughtCells(1);
+
+            // 更新用户信息
+            updateUserInfo();
+
+            // 暂停所有视频的辅助函数
+            function pauseAllVideos() {
+                const videos = document.querySelectorAll('video');
+                videos.forEach(video => {
+                    if (!video.paused) {
+                        video.pause();
+                        console.log('暂停视频:', video.src);
+                    }
+                });
+            }
+
+            // 监听页面可见性变化（适用于标签页切换）
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    pauseAllVideos();
+                }
+            });
+
+            // 监听页面隐藏事件（适用于页面导航）
+            window.addEventListener('pagehide', function() {
+                pauseAllVideos();
+            });
+
+            // 监听页面卸载前事件
+            window.addEventListener('beforeunload', function() {
+                pauseAllVideos();
+            });
+
+            // 监听 blur 事件（窗口失去焦点）
+            window.addEventListener('blur', function() {
+                pauseAllVideos();
+            });
+
+            // 绑定"加载更多"按钮
+            const loadMoreBtn = document.querySelector('.text-center.py-4 button');
+            if (loadMoreBtn) {
+                loadMoreBtn.addEventListener('click', async function() {
+                    currentPage++;
+                    await loadThoughtCells(currentPage);
+                });
+            }
+
+            // ========== 跨页面关注状态同步 ==========
+            // 处理关注状态变化的函数（仅用于跨页面同步）
+            function handleFollowStatusChangeFromOtherPage(data) {
+                const { targetUserId, targetUsername, isFollowing } = data;
+
+                console.log('广场页面收到其他页面的关注状态变化:', data);
+
+                // 更新页面上所有该用户的关注按钮
+                updateAllFollowButtonsForUser(targetUserId, isFollowing);
+
+                // 更新当前用户的关注数（因为是从其他页面来的，需要同步）
+                const delta = isFollowing ? 1 : -1;
+                updateCurrentUserFollowingCount(delta);
+            }
+
+            // 监听 localStorage 变化（跨标签页/跨页面同步）
+            window.addEventListener('storage', function(e) {
+                // 处理关注状态变化
+                if (e.key === 'followStatusChanged' && e.newValue) {
+                    try {
+                        const data = JSON.parse(e.newValue);
+                        handleFollowStatusChangeFromOtherPage(data);
+                    } catch (error) {
+                        console.error('处理关注状态变化失败:', error);
+                    }
+                }
+
+                // 处理收藏状态变化
+                if (e.key === 'bookmarkStatusChanged' && e.newValue) {
+                    try {
+                        const data = JSON.parse(e.newValue);
+                        handleBookmarkStatusChangeFromOtherPage(data);
+                    } catch (error) {
+                        console.error('处理收藏状态变化失败:', error);
+                    }
+                }
+            });
+            // ========== 跨页面关注状态同步结束 ==========
+
+            // 处理收藏状态变化的函数（仅用于跨页面同步）
+            function handleBookmarkStatusChangeFromOtherPage(data) {
+                const { thoughtId, isBookmarked } = data;
+
+                // 更新页面上该思想元胞的收藏按钮状态
+                const thoughtElement = document.querySelector(`[data-thought-id="${thoughtId}"]`);
+                if (thoughtElement) {
+                    const bookmarkBtn = thoughtElement.querySelector('.bookmark-btn i');
+                    if (bookmarkBtn) {
+                        if (isBookmarked) {
+                            bookmarkBtn.classList.remove('fa-bookmark-o');
+                            bookmarkBtn.classList.add('fa-bookmark');
+                        } else {
+                            bookmarkBtn.classList.remove('fa-bookmark');
+                            bookmarkBtn.classList.add('fa-bookmark-o');
+                        }
+                    }
+                }
+            }
+
+            // 绑定发布按钮
+            const publishBtn = document.getElementById('publish-btn');
+            const publishModal = document.getElementById('publish-modal');
+            const closeModalBtn = document.getElementById('close-publish-modal');
+            const cancelBtn = document.getElementById('cancel-publish');
+            const publishForm = document.getElementById('publish-form');
+            const contentTextarea = document.getElementById('thought-content');
+            const contentLength = document.getElementById('content-length');
+
+            // 打开发布弹窗的函数
+            function openPublishModal() {
+                publishModal.style.display = 'flex';
+                contentTextarea.focus();
+            }
+
+            // 绑定右上角发布按钮
+            if (publishBtn) {
+                publishBtn.addEventListener('click', openPublishModal);
+            }
+
+            // ========== 快速发布功能 ==========
+            const quickPostInput = document.getElementById('quick-post-input');
+            const quickPostBtn = document.getElementById('quick-post-btn');
+
+            // 自动调整 textarea 高度
+            if (quickPostInput) {
+                quickPostInput.addEventListener('input', function() {
+                    // 重置高度以获取正确的 scrollHeight
+                    this.style.height = '48px';
+                    // 设置新高度
+                    this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+
+                    // 根据内容启用/禁用发布按钮
+                    if (this.value.trim().length > 0) {
+                        quickPostBtn.disabled = false;
+                    } else {
+                        quickPostBtn.disabled = true;
+                    }
+                });
+            }
+
+            // 快速发布按钮点击事件
+            if (quickPostBtn) {
+                quickPostBtn.addEventListener('click', async function() {
+                    const content = quickPostInput.value.trim();
+
+                    if (!content) {
+                        showToast('请输入内容', 'warning');
+                        return;
+                    }
+
+                    // 禁用按钮，防止重复提交
+                    quickPostBtn.disabled = true;
+                    quickPostBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>发布中...';
+
+                    // 构建发布数据
+                    const thoughtData = {
+                        content: content,
+                        images: [...uploadedImages], // 包含上传的图片
+                        visibility: 'public',
+                        tags: [],
+                        location: attachedLink || null // 将链接存储在 location 字段
+                    };
+
+                    // 如果有视频，添加到 images 数组
+                    if (uploadedVideo) {
+                        thoughtData.images.push(uploadedVideo);
+                    }
+
+                    // 调用发布 API
+                    const success = await publishThought(thoughtData);
+
+                    if (success) {
+                        // 清空输入框
+                        quickPostInput.value = '';
+                        quickPostInput.style.height = '48px';
+
+                        // 清空上传的文件和链接
+                        uploadedImages = [];
+                        uploadedVideo = null;
+                        attachedLink = '';
+
+                        // 清空预览区域
+                        document.getElementById('image-preview-container').classList.add('hidden');
+                        document.getElementById('image-preview-container').innerHTML = '';
+                        document.getElementById('video-preview-container').classList.add('hidden');
+                        document.getElementById('video-preview-container').innerHTML = '';
+                        document.getElementById('link-preview-container').classList.add('hidden');
+                        document.getElementById('link-input').value = '';
+
+                        // 重新加载思想元胞列表
+                        currentPage = 1;
+                        await loadThoughtCells(1);
+
+                        // 恢复按钮状态
+                        quickPostBtn.innerHTML = '发布';
+                        quickPostBtn.disabled = true;
+                    } else {
+                        // 恢复按钮状态
+                        quickPostBtn.innerHTML = '发布';
+                        quickPostBtn.disabled = false;
+                    }
+                });
+            }
+
+            // ========== 话题标签功能 ==========
+            const selectedTagsContainer = document.getElementById('selected-tags');
+            const tagsInput = document.getElementById('thought-tags-input');
+            const hiddenTagsInput = document.getElementById('thought-tags');
+            let selectedTags = []; // 存储已选择的标签
+
+            // 添加标签
+            function addTag(tagName) {
+                // 移除 # 号（如果有）
+                tagName = tagName.replace(/^#/, '').trim();
+
+                if (!tagName) return;
+
+                // 检查是否已存在
+                if (selectedTags.includes(tagName)) {
+                    showToast('该话题已添加', 'warning');
+                    return;
+                }
+
+                // 限制最多6个标签
+                if (selectedTags.length >= 6) {
+                    showToast('最多只能添加6个话题', 'warning');
+                    return;
+                }
+
+                // 添加到数组
+                selectedTags.push(tagName);
+
+                // 更新UI
+                renderTags();
+
+                // 更新隐藏输入框的值
+                updateHiddenTagsInput();
+
+                // 清空输入框
+                tagsInput.value = '';
+            }
+
+            // 移除标签（暴露到全局作用域）
+            window.removeTag = function(tagName) {
+                selectedTags = selectedTags.filter(tag => tag !== tagName);
+                renderTags();
+                updateHiddenTagsInput();
+            };
+
+            // 渲染标签UI
+            function renderTags() {
+                if (selectedTags.length === 0) {
+                    selectedTagsContainer.innerHTML = '<span class="text-sm text-gray-400">暂无话题</span>';
+                    return;
+                }
+
+                selectedTagsContainer.innerHTML = selectedTags.map(tag => `
+                    <span class="inline-flex items-center bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                        #${tag}
+                        <button type="button" class="ml-2 text-blue-500 hover:text-blue-700" onclick="removeTag('${tag}')">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </span>
+                `).join('');
+            }
+
+            // 更新隐藏输入框的值
+            function updateHiddenTagsInput() {
+                hiddenTagsInput.value = selectedTags.join(',');
+            }
+
+            // 监听输入框回车事件
+            tagsInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const tagName = this.value.trim();
+                    if (tagName) {
+                        addTag(tagName);
+                    }
+                }
+            });
+
+            // 热门话题按钮点击事件
+            document.querySelectorAll('.hot-tag-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tagName = this.dataset.tag;
+                    addTag(tagName);
+                });
+            });
+
+            // 初始化标签显示
+            renderTags();
+
+            // 关闭发布弹窗
+            function closePublishModal() {
+                publishModal.style.display = 'none';
+                publishForm.reset();
+                contentLength.textContent = '0';
+
+                // 清空标签
+                selectedTags = [];
+                renderTags();
+                updateHiddenTagsInput();
+            }
+
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', closePublishModal);
+            }
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', closePublishModal);
+            }
+
+            // 点击弹窗外部关闭
+            publishModal.addEventListener('click', function(e) {
+                if (e.target === publishModal) {
+                    closePublishModal();
+                }
+            });
+
+            // 实时更新字数统计
+            contentTextarea.addEventListener('input', function() {
+                contentLength.textContent = this.value.length;
+            });
+
+            // 提交发布表单
+            publishForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const content = contentTextarea.value.trim();
+                if (!content) {
+                    showToast('请输入内容', 'warning');
+                    return;
+                }
+
+                const imageUrl = document.getElementById('thought-image').value.trim();
+                const visibility = document.getElementById('thought-visibility').value;
+                const tagsInput = document.getElementById('thought-tags').value.trim();
+
+                // 解析标签
+                const tags = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+
+                // 解析图片
+                const images = imageUrl ? [imageUrl] : [];
+
+                const thoughtData = {
+                    content: content,
+                    images: images,
+                    visibility: visibility,
+                    tags: tags,
+                    location: null
+                };
+
+                // 禁用提交按钮
+                const submitBtn = document.getElementById('submit-publish');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>发布中...';
+
+                // 发布思想元胞
+                const success = await publishThought(thoughtData);
+
+                // 恢复提交按钮
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa fa-paper-plane mr-2"></i>发布';
+
+                if (success) {
+                    closePublishModal();
+                    // 重新加载第一页数据
+                    currentPage = 1;
+                    await loadThoughtCells(1);
+                }
+            });
+        });
+
+        // 评论功能 - 切换评论区域
+        function setupCommentButtons() {
+            document.querySelectorAll('.comment-btn').forEach(commentBtn => {
+                // 移除旧的事件监听器
+                const newCommentBtn = commentBtn.cloneNode(true);
+                commentBtn.parentNode.replaceChild(newCommentBtn, commentBtn);
+
+                newCommentBtn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const thoughtId = this.dataset.thoughtId;
+                    await toggleComments(thoughtId);
+                });
+            });
+        }
+
+        // 切换评论区域显示/隐藏
+        async function toggleComments(thoughtId) {
+            const commentsSection = document.getElementById(`comments-section-${thoughtId}`);
+            const commentsList = document.getElementById(`comments-list-${thoughtId}`);
+
+            if (commentsSection.classList.contains('hidden')) {
+                // 展开评论区域
+                commentsSection.classList.remove('hidden');
+
+                // 加载评论列表
+                commentsList.innerHTML = `
+                    <div class="text-center text-gray-500 py-4">
+                        <i class="fa fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p class="text-sm">加载中...</p>
+                    </div>
+                `;
+
+                await loadCommentsInline(thoughtId);
+            } else {
+                // 收起评论区域
+                commentsSection.classList.add('hidden');
+            }
+        }
+
+        // 加载评论列表（内联版本）
+        async function loadCommentsInline(thoughtId) {
+            const commentsList = document.getElementById(`comments-list-${thoughtId}`);
+
+            try {
+                // 调用后端 API 获取评论
+                const response = await fetch(`${API_BASE_URL}/api/square/thoughts/${thoughtId}/comments`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.code === 200 && result.data && result.data.comments) {
+                    const comments = result.data.comments;
+
+                    if (comments.length === 0) {
+                        commentsList.innerHTML = `
+                            <div class="text-center text-gray-400 py-6">
+                                <i class="fa fa-comment-o text-3xl mb-2"></i>
+                                <p class="text-sm">还没有评论，快来抢沙发吧~</p>
+                            </div>
+                        `;
+                    } else {
+                        commentsList.innerHTML = comments.map(comment => `
+                            <div class="flex space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-custom">
+                                <img src="${comment.avatar_url || 'https://picsum.photos/seed/' + comment.user_id + '/400/400'}" alt="头像" class="w-8 h-8 rounded-full">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-1">
+                                        <span class="font-medium text-gray-900 text-sm">${comment.username || '匿名用户'}</span>
+                                        <span class="text-xs text-gray-500">${formatDate(comment.created_at)}</span>
+                                    </div>
+                                    <p class="text-gray-700 text-sm leading-relaxed">${escapeHtml(comment.content)}</p>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                } else {
+                    throw new Error('评论数据格式不正确');
+                }
+            } catch (error) {
+                console.error('加载评论失败:', error);
+                commentsList.innerHTML = `
+                    <div class="text-center text-red-500 py-6">
+                        <i class="fa fa-exclamation-circle text-2xl mb-2"></i>
+                        <p class="text-sm">加载评论失败: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 发表评论（内联版本）
+        async function submitCommentInline(thoughtId) {
+            const commentInput = document.getElementById(`comment-input-${thoughtId}`);
+            const submitBtn = document.getElementById(`submit-comment-btn-${thoughtId}`);
+            const charCount = document.getElementById(`comment-char-count-${thoughtId}`);
+            const content = commentInput.value.trim();
+
+            if (!content) {
+                showToast('请输入评论内容', 'warning');
+                return;
+            }
+
+            if (content.length > 500) {
+                showToast('评论内容不能超过500字', 'warning');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('auth_token');
+
+                if (!token) {
+                    showToast('请先登录', 'error');
+                    return;
+                }
+
+                // 解析 token 获取用户 ID
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const userId = payload.user_id;
+
+                // 禁用按钮，显示加载状态
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+
+                // 调用后端 API 发表评论
+                const response = await fetch(`${API_BASE_URL}/api/square/thoughts/${thoughtId}/comments?user_id=${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ content })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.code === 200) {
+                    // 显示成功提示
+                    showToast('评论成功', 'success');
+
+                    // 清空输入框
+                    commentInput.value = '';
+                    charCount.textContent = '0/500';
+
+                    // 重新加载评论列表
+                    await loadCommentsInline(thoughtId);
+
+                    // 更新评论数显示
+                    const commentBtn = document.querySelector(`.comment-btn[data-thought-id="${thoughtId}"] .comment-count`);
+                    if (commentBtn) {
+                        const currentCount = parseInt(commentBtn.textContent) || 0;
+                        commentBtn.textContent = currentCount + 1;
+                    }
+                } else {
+                    throw new Error(result.message || '评论失败');
+                }
+            } catch (error) {
+                console.error('评论失败:', error);
+                showToast('评论失败: ' + error.message, 'error');
+            } finally {
+                // 恢复按钮状态
+                submitBtn.innerHTML = '发表';
+                submitBtn.disabled = content.length === 0;
+            }
+        }
+
+        // 点赞功能
+        function setupLikeButtons() {
+            document.querySelectorAll('.like-btn').forEach(likeBtn => {
+                // 移除旧的事件监听器（通过克隆节点）
+                const newLikeBtn = likeBtn.cloneNode(true);
+                likeBtn.parentNode.replaceChild(newLikeBtn, likeBtn);
+
+                newLikeBtn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const thoughtId = this.dataset.thoughtId;
+                    if (!thoughtId) {
+                        console.error('缺少 thought ID');
+                        return;
+                    }
+
+                    const heart = this.querySelector('i');
+                    const count = this.querySelector('span');
+                    let currentCount = parseInt(count.textContent.replace(/,/g, ''));
+                    const isLiked = heart.classList.contains('fa-heart');
+
+                    // 乐观更新 UI
+                    if (isLiked) {
+                        heart.classList.remove('fa-heart', 'text-red-500');
+                        heart.classList.add('fa-heart-o');
+                        count.textContent = Math.max(0, currentCount - 1).toLocaleString();
+                    } else {
+                        heart.classList.remove('fa-heart-o');
+                        heart.classList.add('fa-heart', 'text-red-500');
+                        count.textContent = (currentCount + 1).toLocaleString();
+                    }
+
+                    // 调用后端 API
+                    try {
+                        const token = localStorage.getItem('auth_token');
+
+                        if (!token) {
+                            showToast('请先登录', 'warning');
+                            // 回滚 UI
+                            if (isLiked) {
+                                heart.classList.remove('fa-heart-o');
+                                heart.classList.add('fa-heart', 'text-red-500');
+                                count.textContent = currentCount.toLocaleString();
+                            } else {
+                                heart.classList.remove('fa-heart', 'text-red-500');
+                                heart.classList.add('fa-heart-o');
+                                count.textContent = currentCount.toLocaleString();
+                            }
+                            return;
+                        }
+
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        const userId = payload.user_id;
+
+                        const response = await fetch(`${API_BASE_URL}/api/square/thoughts/${thoughtId}/like?user_id=${userId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+
+                        const result = await response.json();
+
+                        if (result.code === 200) {
+                            // 根据后端返回的实际状态更新 UI
+                            if (result.data && typeof result.data.is_liked !== 'undefined') {
+                                const actualIsLiked = result.data.is_liked;
+                                const actualCount = result.data.likes_count || currentCount;
+
+                                if (actualIsLiked) {
+                                    heart.classList.remove('fa-heart-o');
+                                    heart.classList.add('fa-heart', 'text-red-500');
+                                } else {
+                                    heart.classList.remove('fa-heart', 'text-red-500');
+                                    heart.classList.add('fa-heart-o');
+                                }
+                                count.textContent = actualCount.toLocaleString();
+                            }
+                        } else {
+                            throw new Error(result.message || '操作失败');
+                        }
+                    } catch (error) {
+                        console.error('点赞操作失败:', error);
+                        showToast('操作失败', 'error');
+
+                        // 回滚 UI
+                        if (isLiked) {
+                            heart.classList.remove('fa-heart-o');
+                            heart.classList.add('fa-heart', 'text-red-500');
+                        } else {
+                            heart.classList.remove('fa-heart', 'text-red-500');
+                            heart.classList.add('fa-heart-o');
+                        }
+                        count.textContent = currentCount.toLocaleString();
+                    }
+                });
+            });
+        }
+
+        // 收藏功能
+        function setupBookmarkButtons() {
+            document.querySelectorAll('.bookmark-btn').forEach(bookmarkBtn => {
+                // 移除旧的事件监听器（通过克隆节点）
+                const newBookmarkBtn = bookmarkBtn.cloneNode(true);
+                bookmarkBtn.parentNode.replaceChild(newBookmarkBtn, bookmarkBtn);
+
+                newBookmarkBtn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const thoughtId = this.closest('[data-thought-id]')?.dataset.thoughtId;
+                    if (!thoughtId) {
+                        console.error('缺少 thought ID');
+                        return;
+                    }
+
+                    const icon = this.querySelector('i');
+                    const isBookmarked = icon.classList.contains('fa-bookmark');
+
+                    // 乐观更新 UI
+                    if (isBookmarked) {
+                        icon.classList.remove('fa-bookmark');
+                        icon.classList.add('fa-bookmark-o');
+                    } else {
+                        icon.classList.remove('fa-bookmark-o');
+                        icon.classList.add('fa-bookmark');
+                    }
+
+                    // 调用后端 API
+                    try {
+                        const token = localStorage.getItem('auth_token');
+
+                        if (!token) {
+                            showToast('请先登录', 'warning');
+                            // 回滚 UI
+                            if (isBookmarked) {
+                                icon.classList.remove('fa-bookmark-o');
+                                icon.classList.add('fa-bookmark');
+                            } else {
+                                icon.classList.remove('fa-bookmark');
+                                icon.classList.add('fa-bookmark-o');
+                            }
+                            return;
+                        }
+
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        const userId = payload.user_id;
+
+                        const response = await fetch(`${API_BASE_URL}/api/square/thoughts/${thoughtId}/bookmark?user_id=${userId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+
+                        const result = await response.json();
+
+                        if (result.code === 200) {
+                            // 根据后端返回的实际状态更新 UI
+                            if (result.data && typeof result.data.is_bookmarked !== 'undefined') {
+                                const actualIsBookmarked = result.data.is_bookmarked;
+
+                                if (actualIsBookmarked) {
+                                    icon.classList.remove('fa-bookmark-o');
+                                    icon.classList.add('fa-bookmark');
+                                    showToast('收藏成功', 'success');
+                                } else {
+                                    icon.classList.remove('fa-bookmark');
+                                    icon.classList.add('fa-bookmark-o');
+                                    showToast('已取消收藏', 'success');
+                                }
+
+                                // 触发跨页面同步事件（通知其他页面更新收藏状态）
+                                const syncData = {
+                                    thoughtId: thoughtId,
+                                    isBookmarked: actualIsBookmarked,
+                                    timestamp: Date.now()
+                                };
+                                localStorage.setItem('bookmarkStatusChanged', JSON.stringify(syncData));
+                            }
+                        } else {
+                            throw new Error(result.message || '操作失败');
+                        }
+                    } catch (error) {
+                        console.error('收藏操作失败:', error);
+                        showToast('操作失败', 'error');
+
+                        // 回滚 UI
+                        if (isBookmarked) {
+                            icon.classList.remove('fa-bookmark-o');
+                            icon.classList.add('fa-bookmark');
+                        } else {
+                            icon.classList.remove('fa-bookmark');
+                            icon.classList.add('fa-bookmark-o');
+                        }
+                    }
+                });
+            });
+        }
+
+        // 更新页面中的用户信息 (和 Vue 的 authManager 保持一致)
+        async function updateUserInfo() {
+            let currentUser = null;
+
+            // 从 JWT token 中解析用户信息 (和 Vue 的 authManager 一致)
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                try {
+                    // 简单的 JWT 解析 (格式: header.payload.signature)
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    currentUser = {
+                        user_id: payload.user_id,
+                        username: payload.username,
+                        email: payload.email
+                    };
+                } catch (error) {
+                    console.error('解析 token 失败:', error);
+                }
+            }
+
+            if (currentUser) {
+                // 生成用户头像URL（使用用户ID作为seed）
+                const avatarUrl = `https://picsum.photos/seed/${currentUser.user_id}/200/200`;
+
+                // 更新顶部导航栏的用户头像
+                const headerAvatar = document.getElementById('header-user-avatar');
+                if (headerAvatar) {
+                    headerAvatar.src = avatarUrl;
+                    headerAvatar.alt = currentUser.username;
+                }
+
+                // 更新右侧边栏的用户信息
+                const sidebarAvatar = document.getElementById('sidebar-user-avatar');
+                if (sidebarAvatar) {
+                    sidebarAvatar.src = avatarUrl;
+                    sidebarAvatar.alt = currentUser.username;
+                }
+
+                const sidebarName = document.getElementById('sidebar-user-name');
+                if (sidebarName) {
+                    sidebarName.textContent = currentUser.username;
+                }
+
+                const sidebarBio = document.getElementById('sidebar-user-bio');
+                if (sidebarBio) {
+                    sidebarBio.textContent = currentUser.email || '数字生命探索者';
+                }
+
+                // 更新发帖输入框的用户头像
+                const postInputAvatar = document.getElementById('post-input-user-avatar');
+                if (postInputAvatar) {
+                    postInputAvatar.src = avatarUrl;
+                    postInputAvatar.alt = currentUser.username;
+                }
+
+                // 从后端 API 获取用户资料 (包括统计数据)
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/square/users/${currentUser.user_id}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const result = await response.json();
+
+                    if (result.code === 200 && result.data && result.data.profile) {
+                        const profile = result.data.profile;
+
+                        // 更新统计数据
+                        const followingCount = document.getElementById('sidebar-following-count');
+                        if (followingCount) {
+                            followingCount.textContent = profile.following_count || 0;
+                        }
+
+                        const followersCount = document.getElementById('sidebar-followers-count');
+                        if (followersCount) {
+                            followersCount.textContent = profile.followers_count || 0;
+                        }
+
+                        // 如果有 bio,更新 bio
+                        if (profile.bio) {
+                            const sidebarBio = document.getElementById('sidebar-user-bio');
+                            if (sidebarBio) {
+                                sidebarBio.textContent = profile.bio;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.warn('从 API 获取用户资料失败:', error);
+                }
+            }
+        }
+
+        // 更新当前用户的关注数
+        function updateCurrentUserFollowingCount(delta) {
+            try {
+                // 更新侧边栏的关注数显示
+                const followingCountElement = document.getElementById('sidebar-following-count');
+                if (followingCountElement) {
+                    const currentCount = parseInt(followingCountElement.textContent) || 0;
+                    const newCount = Math.max(0, currentCount + delta); // 确保不会小于0
+                    followingCountElement.textContent = newCount;
+                }
+
+                // 触发自定义事件，通知其他页面更新
+                window.dispatchEvent(new CustomEvent('followingCountChanged', {
+                    detail: { delta: delta }
+                }));
+            } catch (error) {
+                console.error('更新关注数失败:', error);
+            }
+        }
+
+        // 更新页面上所有同一用户的关注按钮状态
+        function updateAllFollowButtonsForUser(targetUserId, isFollowing) {
+            try {
+                // 查找页面上所有该用户的关注按钮
+                const allButtons = document.querySelectorAll(`.follow-btn[data-user-id="${targetUserId}"]`);
+
+                allButtons.forEach(btn => {
+                    // 更新按钮状态
+                    btn.dataset.isFollowing = isFollowing;
+                    btn.textContent = isFollowing ? '已关注' : '+ 关注';
+
+                    // 更新样式
+                    if (isFollowing) {
+                        btn.classList.remove('bg-primary', 'text-white', 'hover:bg-primary/90');
+                        btn.classList.add('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
+                    } else {
+                        btn.classList.remove('bg-gray-100', 'text-gray-600', 'hover:bg-gray-200');
+                        btn.classList.add('bg-primary', 'text-white', 'hover:bg-primary/90');
+                    }
+                });
+            } catch (error) {
+                console.error('更新关注按钮失败:', error);
+            }
+        }
+
+        // 关注功能
+        function setupFollowButtons() {
+            document.querySelectorAll('.follow-btn').forEach(followBtn => {
+                // 移除旧的事件监听器
+                const newFollowBtn = followBtn.cloneNode(true);
+                followBtn.parentNode.replaceChild(newFollowBtn, followBtn);
+
+                newFollowBtn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const targetUserId = this.dataset.userId;
+                    const targetUsername = this.dataset.username;
+                    const isFollowing = this.dataset.isFollowing === 'true';
+
+                    await toggleFollow(targetUserId, targetUsername, isFollowing, this);
+                });
+            });
+        }
+
+        // 切换关注状态
+        async function toggleFollow(targetUserId, targetUsername, isFollowing, buttonElement) {
+            try {
+                const token = localStorage.getItem('auth_token');
+
+                if (!token) {
+                    showToast('请先登录', 'error');
+                    return;
+                }
+
+                // 解析 token 获取当前用户 ID
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const currentUserId = payload.user_id;
+
+                // 禁用按钮
+                buttonElement.disabled = true;
+                const originalText = buttonElement.textContent;
+                buttonElement.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+
+                let response;
+                if (isFollowing) {
+                    // 取消关注
+                    response = await fetch(`${API_BASE_URL}/api/square/follow/${targetUserId}?user_id=${currentUserId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                } else {
+                    // 关注
+                    response = await fetch(`${API_BASE_URL}/api/square/follow?user_id=${currentUserId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ following_id: targetUserId })
+                    });
+                }
+
+                const result = await response.json();
+
+                if (response.ok && result.code === 200) {
+                    // 更新关注状态
+                    const newIsFollowing = !isFollowing;
+
+                    // 【本地更新】更新页面上所有该用户的关注按钮
+                    updateAllFollowButtonsForUser(targetUserId, newIsFollowing);
+
+                    // 【本地更新】更新当前用户的关注数
+                    if (newIsFollowing) {
+                        showToast(`已关注 ${targetUsername}`, 'success');
+                        updateCurrentUserFollowingCount(1);
+                    } else {
+                        showToast(`已取消关注 ${targetUsername}`, 'success');
+                        updateCurrentUserFollowingCount(-1);
+                    }
+
+                    // 触发跨页面同步事件（通知其他页面更新）
+                    const syncData = {
+                        targetUserId: targetUserId,
+                        targetUsername: targetUsername,
+                        isFollowing: newIsFollowing,
+                        timestamp: Date.now()
+                    };
+
+                    // 保存到 localStorage（触发其他标签页/页面的 storage 事件）
+                    localStorage.setItem('followStatusChanged', JSON.stringify(syncData));
+                } else {
+                    throw new Error(result.message || '操作失败');
+                }
+            } catch (error) {
+                console.error('关注操作失败:', error);
+                showToast('操作失败: ' + error.message, 'error');
+                // 恢复按钮文本
+                buttonElement.textContent = isFollowing ? '已关注' : '+ 关注';
+            } finally {
+                // 恢复按钮状态
+                buttonElement.disabled = false;
+            }
+        }
+    </script>
+
+    <!-- API配置和用户认证 -->
+    <script src="./js/api-config.js"></script>
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>云己 - 消息</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#818CF8',
+                        dark: '#1F2937',
+                        light: '#F9FAFB'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .transition-custom {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header class="sticky top-0 z-50 bg-white shadow-sm">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <!-- 左侧Logo -->
+                <div class="flex items-center space-x-4">
+                    <a href="javascript:navigateTo('square')" class="text-2xl font-bold text-primary hover:opacity-80 transition-custom">
+                        云己
+                        <span class="text-dark">UpMe</span>
+                    </a>
+                    
+                    <!-- 导航菜单 -->
+                    <nav class="hidden md:flex items-center space-x-6">
+                        <a href="javascript:navigateTo('square')" class="text-gray-600 hover:text-primary transition-custom">广场</a>
+                        <a href="javascript:navigateTo('following')" class="text-gray-600 hover:text-primary transition-custom">关注</a>
+                        <a href="javascript:navigateTo('messages')" class="text-primary font-medium">消息</a>
+                    </nav>
+                </div>
+                
+                <!-- 右侧工具栏 -->
+                <div class="flex items-center space-x-4">
+                    <!-- 用户头像 -->
+                    <div class="relative">
+                        <button onclick="navigateTo('homepage')" class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary focus:outline-none">
+                            <img
+                                id="header-user-avatar"
+                                src="https://picsum.photos/seed/user123/200/200"
+                                alt="用户头像"
+                                class="w-full h-full object-cover"
+                            >
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="w-full max-w-[1600px] mx-auto">
+            <!-- 页面标题 -->
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">消息中心</h1>
+                <p class="text-gray-500">查看你的所有消息和通知</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-10 gap-6">
+                <!-- 左侧：消息列表 -->
+                <div class="lg:col-span-3">
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden border-2 border-gray-200">
+                        <!-- 消息类型标签 -->
+                        <div class="border-b-2 border-gray-200 bg-gray-50">
+                            <div class="flex">
+                                <button class="flex-1 py-3 px-4 text-center font-medium text-primary border-b-2 border-primary bg-white">
+                                    私信
+                                </button>
+                                <button class="flex-1 py-3 px-4 text-center font-medium text-gray-500 hover:text-primary transition-custom">
+                                    通知
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 消息列表 -->
+                        <div class="divide-y divide-gray-200 max-h-[750px] overflow-y-auto">
+                            <!-- 消息项 1 (未读) -->
+                            <div class="p-4 hover:bg-gray-50 cursor-pointer transition-custom bg-blue-50">
+                                <div class="flex items-start space-x-3">
+                                    <div class="relative">
+                                        <img src="https://picsum.photos/seed/user1/100/100" alt="用户头像" class="w-12 h-12 rounded-full">
+                                        <span class="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex justify-between items-start mb-1">
+                                            <h4 class="font-bold text-gray-900 truncate">测试用户</h4>
+                                            <span class="text-xs text-gray-500 whitespace-nowrap ml-2">10分钟前</span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 truncate">你好，很高兴认识你！</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 消息项 2 -->
+                            <div class="p-4 hover:bg-gray-50 cursor-pointer transition-custom">
+                                <div class="flex items-start space-x-3">
+                                    <img src="https://picsum.photos/seed/user2/100/100" alt="用户头像" class="w-12 h-12 rounded-full">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex justify-between items-start mb-1">
+                                            <h4 class="font-medium text-gray-900 truncate">李华</h4>
+                                            <span class="text-xs text-gray-500 whitespace-nowrap ml-2">2小时前</span>
+                                        </div>
+                                        <p class="text-sm text-gray-500 truncate">谢谢你的分享，很有启发！</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 消息项 3 -->
+                            <div class="p-4 hover:bg-gray-50 cursor-pointer transition-custom">
+                                <div class="flex items-start space-x-3">
+                                    <img src="https://picsum.photos/seed/user3/100/100" alt="用户头像" class="w-12 h-12 rounded-full">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex justify-between items-start mb-1">
+                                            <h4 class="font-medium text-gray-900 truncate">王小明</h4>
+                                            <span class="text-xs text-gray-500 whitespace-nowrap ml-2">昨天</span>
+                                        </div>
+                                        <p class="text-sm text-gray-500 truncate">周末有空一起讨论一下吗？</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 消息项 4 -->
+                            <div class="p-4 hover:bg-gray-50 cursor-pointer transition-custom">
+                                <div class="flex items-start space-x-3">
+                                    <img src="https://picsum.photos/seed/user4/100/100" alt="用户头像" class="w-12 h-12 rounded-full">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex justify-between items-start mb-1">
+                                            <h4 class="font-medium text-gray-900 truncate">张三</h4>
+                                            <span class="text-xs text-gray-500 whitespace-nowrap ml-2">3天前</span>
+                                        </div>
+                                        <p class="text-sm text-gray-500 truncate">收到，我会尽快回复的</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧：聊天窗口 -->
+                <div class="lg:col-span-7">
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden h-[750px] flex flex-col border-2 border-gray-200">
+                        <!-- 聊天头部 -->
+                        <div class="p-4 border-b-2 border-gray-200 flex items-center justify-between bg-gray-50">
+                            <div class="flex items-center space-x-3">
+                                <img src="https://picsum.photos/seed/user1/100/100" alt="用户头像" class="w-10 h-10 rounded-full border-2 border-primary">
+                                <div>
+                                    <h3 class="font-bold text-gray-900">测试用户</h3>
+                                    <p class="text-xs text-green-500 flex items-center">
+                                        <span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                                        在线
+                                    </p>
+                                </div>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600 transition-colors">
+                                <i class="fa fa-ellipsis-v"></i>
+                            </button>
+                        </div>
+
+                        <!-- 聊天内容区 -->
+                        <div class="flex-1 p-6 overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
+                            <div class="space-y-4">
+                                <!-- 对方消息 -->
+                                <div class="flex items-start space-x-3">
+                                    <img src="https://picsum.photos/seed/user1/100/100" alt="用户头像" class="w-8 h-8 rounded-full border-2 border-gray-200">
+                                    <div class="flex-1">
+                                        <div class="bg-white border-2 border-gray-200 rounded-2xl rounded-tl-none px-4 py-3 shadow-md max-w-md">
+                                            <p class="text-gray-800">你好，很高兴认识你！</p>
+                                        </div>
+                                        <span class="text-xs text-gray-500 mt-1 ml-2">10:30</span>
+                                    </div>
+                                </div>
+
+                                <!-- 我的消息 -->
+                                <div class="flex items-start space-x-3 justify-end">
+                                    <div class="flex-1 flex flex-col items-end">
+                                        <div class="bg-primary border-2 border-primary rounded-2xl rounded-tr-none px-4 py-3 shadow-md max-w-md">
+                                            <p class="text-white">你好！我也很高兴认识你 😊</p>
+                                        </div>
+                                        <span class="text-xs text-gray-500 mt-1 mr-2">10:32</span>
+                                    </div>
+                                </div>
+
+                                <!-- 对方消息 -->
+                                <div class="flex items-start space-x-3">
+                                    <img src="https://picsum.photos/seed/user1/100/100" alt="用户头像" class="w-8 h-8 rounded-full border-2 border-gray-200">
+                                    <div class="flex-1">
+                                        <div class="bg-white border-2 border-gray-200 rounded-2xl rounded-tl-none px-4 py-3 shadow-md max-w-md">
+                                            <p class="text-gray-800">看到你分享的思想元胞，觉得很有意思</p>
+                                        </div>
+                                        <span class="text-xs text-gray-500 mt-1 ml-2">10:33</span>
+                                    </div>
+                                </div>
+
+                                <!-- 我的消息 -->
+                                <div class="flex items-start space-x-3 justify-end">
+                                    <div class="flex-1 flex flex-col items-end">
+                                        <div class="bg-primary border-2 border-primary rounded-2xl rounded-tr-none px-4 py-3 shadow-md max-w-md">
+                                            <p class="text-white">谢谢！我们可以多交流交流</p>
+                                        </div>
+                                        <span class="text-xs text-gray-500 mt-1 mr-2">10:35</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 输入框 -->
+                        <div class="p-4 border-t-2 border-gray-200 bg-white">
+                            <div class="flex items-end space-x-3">
+                                <div class="flex-1">
+                                    <textarea
+                                        placeholder="输入消息..."
+                                        rows="2"
+                                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none"
+                                    ></textarea>
+                                </div>
+                                <button class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-xl font-medium transition-custom shadow-md hover:shadow-lg">
+                                    <i class="fa fa-paper-plane mr-2"></i>发送
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 空状态提示 (默认隐藏) -->
+                    <div id="emptyState" class="hidden bg-white rounded-xl shadow-md border-2 border-gray-200 p-12 text-center h-[750px] flex flex-col items-center justify-center">
+                        <i class="fa fa-comments-o text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-bold text-gray-700 mb-2">还没有消息</h3>
+                        <p class="text-gray-500">选择左侧的对话开始聊天</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div id="toast" class="hidden fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg z-50">
+        <span id="toast-message">操作成功</span>
+    </div>
+
+    <!-- API配置和用户认证 -->
+    <script src="./js/api-config.js"></script>
+    
+    <script>
+        // 页面加载时更新用户头像
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    const userId = payload.user_id;
+                    const avatarUrl = `https://picsum.photos/seed/${userId}/200/200`;
+                    
+                    const headerAvatar = document.getElementById('header-user-avatar');
+                    if (headerAvatar) {
+                        headerAvatar.src = avatarUrl;
+                    }
+                } catch (error) {
+                    console.error('解析 token 失败:', error);
+                }
+            }
+        });
+
+        // Toast 提示函数
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            toastMessage.textContent = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
+

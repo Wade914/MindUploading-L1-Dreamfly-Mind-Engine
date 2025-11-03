@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>云己 - 广场</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#818CF8',
+                        dark: '#1F2937',
+                        light: '#F9FAFB'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .bg-gradient-custom {
+                background: linear-gradient(135deg, #4F46E5 0%, #818CF8 100%);
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            .transition-custom {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .hover-scale {
+                transition: transform 0.3s ease;
+            }
+            .hover-scale:hover {
+                transform: scale(1.02);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header class="sticky top-0 z-50 bg-white shadow-sm">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <!-- 左侧Logo -->
+                <div class="flex items-center space-x-4">
+                    <a href="#" class="text-2xl font-bold text-primary">
+                        云己
+                        <span class="text-dark">UpMe</span>
+                    </a>
+                    
+                    <!-- 导航菜单 - 桌面端 -->
+                    <nav class="hidden md:flex items-center space-x-6">
+                        <a href="square.html" class="text-primary font-medium">广场</a>
+                        <a href="#" class="text-gray-600 hover:text-primary transition-custom">探索</a>
+                        <a href="#" class="text-gray-600 hover:text-primary transition-custom">关注</a>
+                        <a href="#" class="text-gray-600 hover:text-primary transition-custom">消息</a>
+                    </nav>
+                </div>
+                
+                <!-- 右侧工具栏 -->
+                <div class="flex items-center space-x-4">
+                    <!-- 搜索框 -->
+                    <div class="relative hidden md:block">
+                        <input 
+                            type="text" 
+                            placeholder="搜索思想元胞、用户或话题..." 
+                            class="pl-10 pr-4 py-2 w-64 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white transition-custom"
+                        >
+                        <i class="fa fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                    
+                    <!-- 发布按钮 -->
+                    <button id="publish-btn" class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-6 rounded-full flex items-center transition-custom">
+                        <i class="fa fa-pencil-square-o mr-2"></i> 发布
+                    </button>
+                    
+                    <!-- 用户头像 -->
+                    <div class="relative">
+                        <button class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary focus:outline-none">
+                            <img 
+                                src="https://picsum.photos/seed/user123/200/200" 
+                                alt="用户头像" 
+                                class="w-full h-full object-cover"
+                            >
+                        </button>
+                    </div>
+                    
+                    <!-- 移动端菜单按钮 -->
+                    <button class="md:hidden text-gray-600 hover:text-primary">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- 左侧边栏 -->
+            <aside class="lg:w-1/4 lg:sticky lg:top-24 lg:self-start">
+                <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+                    <!-- 用户信息卡片 -->
+                    <div class="text-center">
+                        <div class="relative w-24 h-24 mx-auto mb-4">
+                            <div class="absolute inset-0 bg-gradient-custom rounded-full opacity-20 animate-pulse"></div>
+                            <img 
+                                src="https://picsum.photos/seed/user123/200/200" 
+                                alt="用户头像" 
+                                class="w-full h-full object-cover rounded-full border-4 border-white"
+                            >
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-900 mb-1">张三</h2>
+                        <p class="text-gray-500 mb-4">数字生命探索者</p>
+                        <div class="flex justify-center space-x-2 text-sm text-gray-500 mb-4">
+                            <span class="flex items-center"><i class="fa fa-users mr-1 text-primary"></i> 238 关注</span>
+                            <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <span class="flex items-center"><i class="fa fa-user mr-1 text-primary"></i> 512 粉丝</span>
+                        </div>
+                        <a href="homepage.html" class="block w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 rounded-lg transition-custom">
+                            查看个人主页
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+                    <!-- 推荐关注 -->
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">推荐关注</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <img 
+                                    src="https://picsum.photos/seed/jobs3/100/100" 
+                                    alt="史蒂夫·乔布斯" 
+                                    class="w-10 h-10 rounded-full object-cover"
+                                >
+                                <div>
+                                    <p class="font-medium text-gray-900">史蒂夫·乔布斯</p>
+                                    <p class="text-xs text-gray-500">Apple 创始人</p>
+                                </div>
+                            </div>
+                            <button class="text-primary hover:text-secondary font-medium text-sm transition-custom">
+                                关注
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <img 
+                                    src="https://picsum.photos/seed/witt1/100/100" 
+                                    alt="维特根斯坦" 
+                                    class="w-10 h-10 rounded-full object-cover"
+                                >
+                                <div>
+                                    <p class="font-medium text-gray-900">维特根斯坦</p>
+                                    <p class="text-xs text-gray-500">哲学家</p>
+                                </div>
+                            </div>
+                            <button class="text-primary hover:text-secondary font-medium text-sm transition-custom">
+                                关注
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <img 
+                                    src="https://picsum.photos/seed/user456/100/100" 
+                                    alt="李华" 
+                                    class="w-10 h-10 rounded-full object-cover"
+                                >
+                                <div>
+                                    <p class="font-medium text-gray-900">李华</p>
+                                    <p class="text-xs text-gray-500">AI 研究员</p>
+                                </div>
+                            </div>
+                            <button class="text-primary hover:text-secondary font-medium text-sm transition-custom">
+                                关注
+                            </button>
+                        </div>
+                    </div>
+                    <button class="w-full text-center text-primary hover:text-secondary font-medium text-sm mt-4 transition-custom">
+                        查看更多
+                    </button>
+                </div>
+            </aside>
+
+            <!-- 中间内容区 -->
+            <div class="lg:w-2/4">
+                <!-- 发布框 -->
+                <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+                    <div class="flex space-x-4">
+                        <img 
+                            src="https://picsum.photos/seed/user123/200/200" 
+                            alt="用户头像" 
+                            class="w-10 h-10 rounded-full object-cover"
+                        >
+                        <div class="flex-1">
+                            <input 
+                                type="text" 
+                                placeholder="分享你的思想元胞..." 
+                                class="w-full px-4 py-3 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white transition-custom"
+                            >
+                            <div class="flex justify-between mt-4">
+                                <div class="flex space-x-4">
+                                    <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                        <i class="fa fa-picture-o text-xl mr-1"></i>
+                                        <span>图片</span>
+                                    </button>
+                                    <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                        <i class="fa fa-video-camera text-xl mr-1"></i>
+                                        <span>视频</span>
+                                    </button>
+                                    <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                        <i class="fa fa-link text-xl mr-1"></i>
+                                        <span>链接</span>
+                                    </button>
+                                </div>
+                                <button class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-6 rounded-full transition-custom">
+                                    发布
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 动态内容列表 -->
+                <div class="space-y-6">
+                    <!-- 云己使用指南思想元胞 -->
+                    <article class="bg-white rounded-2xl shadow-sm p-6 hover-scale border-2 border-primary">
+                        <div class="flex items-start space-x-4 mb-4">
+                            <img 
+                                src="https://picsum.photos/seed/upme/100/100" 
+                                alt="云己官方" 
+                                class="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-primary"
+                            >
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <h3 class="font-bold text-gray-900">云己官方</h3>
+                                    <span class="text-primary text-sm">使用指南</span>
+                                </div>
+                                <p class="text-sm text-gray-500">欢迎来到云己 · 数字永生的开始</p>
+                            </div>
+                            <button class="ml-auto text-gray-400 hover:text-gray-600 transition-custom">
+                                <i class="fa fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                        <div class="mb-4">
+                            <h2 class="text-xl font-bold text-gray-900 mb-3">云己使用指南</h2>
+                            <p class="text-gray-800 mb-3">
+                                欢迎加入云己！这是一个帮助你记录思想、构建数字意识体的平台。以下是快速上手指南：
+                            </p>
+                            <div class="bg-blue-50 p-4 rounded-xl mb-4">
+                                <ul class="list-disc pl-5 space-y-2">
+                                    <li><strong>1. 创建你的第一个思想元胞</strong> - 点击上方的"发布"按钮，分享你的想法和思考</li>
+                                    <li><strong>2. 完善个人资料</strong> - 点击右上角头像进入个人主页，上传头像、填写简介</li>
+                                    <li><strong>3. 探索广场</strong> - 浏览和发现其他用户的精彩思想元胞</li>
+                                    <li><strong>4. 关注感兴趣的用户</strong> - 及时获取他们的最新动态</li>
+                                    <li><strong>5. 查看你的人生数据库</strong> - 记录和追踪你的成长历程</li>
+                                </ul>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 rounded-xl overflow-hidden mb-4">
+                                <img 
+                                    src="https://picsum.photos/seed/guide1/300/200" 
+                                    alt="创建思想元胞" 
+                                    class="w-full h-32 object-cover"
+                                >
+                                <img 
+                                    src="https://picsum.photos/seed/guide2/300/200" 
+                                    alt="完善个人资料" 
+                                    class="w-full h-32 object-cover"
+                                >
+                                <img 
+                                    src="https://picsum.photos/seed/guide3/300/200" 
+                                    alt="探索广场" 
+                                    class="w-full h-32 object-cover"
+                                >
+                            </div>
+                            <div class="flex items-center space-x-2 text-sm text-gray-500">
+                                <a href="#" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition-custom">#使用指南</a>
+                                <a href="#" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition-custom">#云己入门</a>
+                                <a href="#" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition-custom">#数字永生</a>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-100 pt-4 flex justify-between items-center">
+                            <div class="flex space-x-6">
+                                <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                    <i class="fa fa-heart-o mr-2"></i>
+                                    <span>5.6k</span>
+                                </button>
+                                <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                    <i class="fa fa-comment-o mr-2"></i>
+                                    <span>432</span>
+                                </button>
+                                <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                    <i class="fa fa-share-alt mr-2"></i>
+                                    <span>123</span>
+                                </button>
+                            </div>
+                            <button class="text-gray-500 hover:text-primary transition-custom">
+                                <i class="fa fa-bookmark-o"></i>
+                            </button>
+                        </div>
+                    </article>
+                    
+                    <!-- 思想元胞 - 1 -->
+                    <article class="bg-white rounded-2xl shadow-sm p-6 hover-scale">
+                        <div class="flex items-start space-x-4 mb-4">
+                            <img 
+                                src="https://picsum.photos/seed/jobs3/100/100" 
+                                alt="史蒂夫·乔布斯" 
+                                class="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                            >
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <h3 class="font-bold text-gray-900">史蒂夫·乔布斯</h3>
+                                    <span class="text-primary text-sm">思想元胞</span>
+                                </div>
+                                <p class="text-sm text-gray-500">2023年6月15日 · 斯坦福演讲</p>
+                            </div>
+                            <button class="ml-auto text-gray-400 hover:text-gray-600 transition-custom">
+                                <i class="fa fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-gray-800 mb-3">
+                                "求知若渴，虚怀若愚。(Stay hungry, stay foolish.)" 这句话对我影响深远。它提醒我们永远保持初学者的心态，对世界充满好奇，不满足于现状。
+                            </p>
+                            <div class="bg-gray-50 p-4 rounded-xl border-l-4 border-primary mb-4">
+                                <p class="italic text-gray-700">
+                                    "你不可能从现在这个点上看到将来；只有回头看时，才会发现它们之间的关系。所以你必须相信，那些点点滴滴，会在你未来的生命里，以某种方式串联起来。"
+                                </p>
+                            </div>
+                            <div class="rounded-xl overflow-hidden">
+                                <img 
+                                    src="https://picsum.photos/seed/stanford/800/400" 
+                                    alt="斯坦福演讲" 
+                                    class="w-full h-auto object-cover"
+                                >
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-100 pt-4 flex justify-between items-center">
+                            <div class="flex space-x-6">
+                                <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                    <i class="fa fa-heart-o mr-2"></i>
+                                    <span>2.3k</span>
+                                </button>
+                                <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                    <i class="fa fa-comment-o mr-2"></i>
+                                    <span>156</span>
+                                </button>
+                                <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                    <i class="fa fa-share-alt mr-2"></i>
+                                    <span>89</span>
+                                </button>
+                            </div>
+                            <button class="text-gray-500 hover:text-primary transition-custom">
+                                <i class="fa fa-bookmark-o"></i>
+                            </button>
+                        </div>
+                    </article>
+
+                    <!-- 思想元胞 - 2 -->
+                    <article class="bg-white rounded-2xl shadow-sm p-6 hover-scale">
+                        <div class="flex items-start space-x-4 mb-4">
+                            <img 
+                                src="https://picsum.photos/seed/witt1/100/100" 
+                                alt="维特根斯坦" 
+                                class="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                            >
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <h3 class="font-bold text-gray-900">维特根斯坦</h3>
+                                    <span class="text-primary text-sm">思想元胞</span>
+                                </div>
+                                <p class="text-sm text-gray-500">2023年4月20日 · 逻辑哲学论</p>
+                            </div>
+                            <button class="ml-auto text-gray-400 hover:text-gray-600 transition-custom">
+                                <i class="fa fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-gray-800 mb-4">
+                                关于语言与世界的关系，我一直在思考：我们的语言如何描述世界？世界的结构如何反映在语言的结构中？
+                            </p>
+                            <div class="bg-gray-50 p-4 rounded-xl border-l-4 border-primary mb-4">
+                                <p class="italic text-gray-700">
+                                    "凡不可说的，应当沉默。(Whereof one cannot speak, thereof one must be silent.)"
+                                </p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 rounded-xl overflow-hidden">
+                                <img 
+                                    src="https://picsum.photos/seed/tractatus/400/300" 
+                                    alt="逻辑哲学论" 
+                                    class="w-full h-40 object-cover"
+                                >
+                                <img 
+                                    src="https://picsum.photos/seed/philosophy/400/300" 
+                                    alt="哲学思考" 
+                                    class="w-full h-40 object-cover"
+                                >
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-100 pt-4 flex justify-between items-center">
+                            <div class="flex space-x-6">
+                                <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                    <i class="fa fa-heart-o mr-2"></i>
+                                    <span>1.8k</span>
+                                </button>
+                                <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                    <i class="fa fa-comment-o mr-2"></i>
+                                    <span>215</span>
+                                </button>
+                                <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                    <i class="fa fa-share-alt mr-2"></i>
+                                    <span>67</span>
+                                </button>
+                            </div>
+                            <button class="text-gray-500 hover:text-primary transition-custom">
+                                <i class="fa fa-bookmark-o"></i>
+                            </button>
+                        </div>
+                    </article>
+
+                    <!-- 思想元胞 - 3 -->
+                    <article class="bg-white rounded-2xl shadow-sm p-6 hover-scale">
+                        <div class="flex items-start space-x-4 mb-4">
+                            <img 
+                                src="https://picsum.photos/seed/user456/100/100" 
+                                alt="李华" 
+                                class="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                            >
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <h3 class="font-bold text-gray-900">李华</h3>
+                                    <span class="text-primary text-sm">思想元胞</span>
+                                </div>
+                                <p class="text-sm text-gray-500">2023年8月5日 · AI 研究</p>
+                            </div>
+                            <button class="ml-auto text-gray-400 hover:text-gray-600 transition-custom">
+                                <i class="fa fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-gray-800 mb-3">
+                                最近在研究数字意识体的构建方法，结合大语言模型和个性化知识库，可以实现对特定人物思维模式的模拟。这对数字永生技术有重要意义。
+                            </p>
+                            <div class="rounded-xl overflow-hidden mb-4">
+                                <img 
+                                    src="https://picsum.photos/seed/ai-research/800/400" 
+                                    alt="AI研究" 
+                                    class="w-full h-auto object-cover"
+                                >
+                            </div>
+                            <div class="flex items-center space-x-2 text-sm text-gray-500">
+                                <a href="#" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition-custom">#数字永生</a>
+                                <a href="#" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition-custom">#AI研究</a>
+                                <a href="#" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition-custom">#意识模拟</a>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-100 pt-4 flex justify-between items-center">
+                            <div class="flex space-x-6">
+                                <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                    <i class="fa fa-heart-o mr-2"></i>
+                                    <span>956</span>
+                                </button>
+                                <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                    <i class="fa fa-comment-o mr-2"></i>
+                                    <span>132</span>
+                                </button>
+                                <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                    <i class="fa fa-share-alt mr-2"></i>
+                                    <span>45</span>
+                                </button>
+                            </div>
+                            <button class="text-gray-500 hover:text-primary transition-custom">
+                                <i class="fa fa-bookmark-o"></i>
+                            </button>
+                        </div>
+                    </article>
+
+                    <!-- 加载更多 -->
+                    <div class="text-center py-4">
+                        <button class="text-primary hover:text-secondary font-medium transition-custom">
+                            加载更多
+                            <i class="fa fa-angle-down ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧边栏 -->
+            <aside class="lg:w-1/4">
+                <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+                    <!-- 热门话题 -->
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">热门话题</h3>
+                    <div class="space-y-3">
+                        <a href="#" class="block p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-custom">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="text-sm text-gray-500">#数字永生</span>
+                                <span class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">热门</span>
+                            </div>
+                            <p class="font-medium text-gray-900">探索人类意识如何在数字世界中永存</p>
+                            <p class="text-xs text-gray-500 mt-1">12.5k 讨论</p>
+                        </a>
+                        <a href="#" class="block p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-custom">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="text-sm text-gray-500">#思想元胞</span>
+                                <span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">新</span>
+                            </div>
+                            <p class="font-medium text-gray-900">记录和分享你的核心思想片段</p>
+                            <p class="text-xs text-gray-500 mt-1">8.2k 讨论</p>
+                        </a>
+                        <a href="#" class="block p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-custom">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="text-sm text-gray-500">#AI伦理</span>
+                            </div>
+                            <p class="font-medium text-gray-900">人工智能发展带来的伦理挑战</p>
+                            <p class="text-xs text-gray-500 mt-1">6.7k 讨论</p>
+                        </a>
+                    </div>
+                    <button class="w-full text-center text-primary hover:text-secondary font-medium text-sm mt-4 transition-custom">
+                        查看全部
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm p-6">
+                    <!-- 推荐内容 -->
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">推荐内容</h3>
+                    <div class="space-y-4">
+                        <a href="#" class="block group">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                                    <img 
+                                        src="https://picsum.photos/seed/podcast/200/200" 
+                                        alt="播客" 
+                                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                    >
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900 group-hover:text-primary transition-custom">数字永生的未来展望</h4>
+                                    <p class="text-xs text-gray-500 mt-1">云己播客 · 45分钟</p>
+                                    <p class="text-xs text-gray-500 mt-1">12.3k 播放</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="#" class="block group">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                                    <img 
+                                        src="https://picsum.photos/seed/article/200/200" 
+                                        alt="文章" 
+                                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                    >
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900 group-hover:text-primary transition-custom">思想元胞：构建个人数字意识体的基石</h4>
+                                    <p class="text-xs text-gray-500 mt-1">云己研究院 · 5分钟阅读</p>
+                                    <p class="text-xs text-gray-500 mt-1">8.7k 阅读</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="#" class="block group">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                                    <img 
+                                        src="https://picsum.photos/seed/event/200/200" 
+                                        alt="活动" 
+                                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                    >
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900 group-hover:text-primary transition-custom">2023数字生命峰会</h4>
+                                    <p class="text-xs text-gray-500 mt-1">线上 · 10月15日</p>
+                                    <p class="text-xs text-gray-500 mt-1">3.5k 人已报名</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <button class="w-full text-center text-primary hover:text-secondary font-medium text-sm mt-4 transition-custom">
+                        发现更多
+                    </button>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-12 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h4 class="text-xl font-bold mb-4">云己 UpMe</h4>
+                    <p class="text-gray-400 mb-4">
+                        数字永生的基础设施，让每个人的思想、记忆和意识超越时间的限制。
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-custom">
+                            <i class="fa fa-weixin text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-custom">
+                            <i class="fa fa-weibo text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-custom">
+                            <i class="fa fa-github text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-custom">
+                            <i class="fa fa-twitter text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                <div>
+                    <h5 class="font-bold text-lg mb-4">产品</h5>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">思想元胞</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">意识体</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">人生数据库</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">星火墙</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">开放API</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="font-bold text-lg mb-4">公司</h5>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">关于我们</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">团队</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">合作伙伴</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">加入我们</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">联系方式</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="font-bold text-lg mb-4">资源</h5>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">帮助中心</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">开发者文档</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">隐私政策</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">服务条款</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">社区论坛</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500">
+                <p>© 2023 云己科技有限公司 版权所有</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 页面加载时的调试信息
+        console.log('=== Square 广场页面已加载 (src/pages/square/pages/square.html) ===');
+        console.log('当前时间:', new Date().toLocaleString());
+
+        // 动态加载思想元胞数据
+        async function loadThoughtCells() {
+            try {
+                // 从环境变量获取API地址 - 使用前端URL
+                const ENVIRONMENT = window.VUE_APP_ENVIRONMENT || 'development';
+                const API_BASE_URL = ENVIRONMENT === 'production'
+                    ? 'https://your-domain.com'
+                    : 'http://localhost:5173';
+
+                const response = await fetch(`${API_BASE_URL}/square/thoughts`);
+                const result = await response.json();
+                
+                if (result.success && result.data.thoughts) {
+                    renderThoughtCells(result.data.thoughts);
+                }
+            } catch (error) {
+                console.error('加载思想元胞失败:', error);
+            }
+        }
+
+        // 渲染思想元胞
+        function renderThoughtCells(thoughts) {
+            const container = document.querySelector('.space-y-6');
+            const guideCard = container.querySelector('article'); // 获取引导卡片
+            
+            // 如果没有思想元胞，显示引导卡片
+            if (thoughts.length === 0) {
+                guideCard.style.display = 'block';
+                return;
+            }
+            
+            // 隐藏引导卡片
+            guideCard.style.display = 'none';
+            
+            // 清空现有内容（保留引导卡片）
+            const existingThoughts = container.querySelectorAll('article:not(.border-primary)');
+            existingThoughts.forEach(thought => thought.remove());
+            
+            // 添加新的思想元胞
+            thoughts.forEach(thought => {
+                const thoughtElement = createThoughtCellElement(thought);
+                container.appendChild(thoughtElement);
+            });
+        }
+
+        // 创建思想元胞元素
+        function createThoughtCellElement(thought) {
+            const article = document.createElement('article');
+            article.className = 'bg-white rounded-2xl shadow-sm p-6 hover-scale';
+            
+            const author = thought.author || {};
+            const tags = thought.tags || [];
+            
+            article.innerHTML = `
+                <div class="flex items-start space-x-4 mb-4">
+                    <img 
+                        src="${author.avatar || 'https://picsum.photos/seed/user' + thought.thought_cell_id + '/100/100'}" 
+                        alt="${author.username || '用户'}" 
+                        class="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                    >
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h3 class="font-bold text-gray-900">${author.username || '匿名用户'}</h3>
+                            <span class="text-primary text-sm">思想元胞</span>
+                        </div>
+                        <p class="text-sm text-gray-500">${formatDate(thought.created_at)}</p>
+                    </div>
+                    <button class="ml-auto text-gray-400 hover:text-gray-600 transition-custom">
+                        <i class="fa fa-ellipsis-h"></i>
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <p class="text-gray-800 mb-3">${thought.content}</p>
+                    ${thought.images && thought.images.length > 0 ? `
+                        <div class="rounded-xl overflow-hidden mb-4">
+                            <img 
+                                src="${thought.images[0]}" 
+                                alt="思想图片" 
+                                class="w-full h-auto object-cover"
+                            >
+                        </div>
+                    ` : ''}
+                    ${tags.length > 0 ? `
+                        <div class="flex items-center space-x-2 text-sm text-gray-500">
+                            ${tags.map(tag => `<a href="#" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition-custom">#${tag}</a>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="border-t border-gray-100 pt-4 flex justify-between items-center">
+                    <div class="flex space-x-6">
+                        <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                            <i class="fa fa-heart-o mr-2"></i>
+                            <span>${thought.likes_count || 0}</span>
+                        </button>
+                        <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                            <i class="fa fa-comment-o mr-2"></i>
+                            <span>${thought.comments_count || 0}</span>
+                        </button>
+                        <button class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                            <i class="fa fa-share-alt mr-2"></i>
+                            <span>${thought.shares_count || 0}</span>
+                        </button>
+                    </div>
+                    <button class="text-gray-500 hover:text-primary transition-custom">
+                        <i class="fa fa-bookmark-o"></i>
+                    </button>
+                </div>
+            `;
+            
+            return article;
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            
+            if (minutes < 1) return '刚刚';
+            if (minutes < 60) return `${minutes}分钟前`;
+            if (hours < 24) return `${hours}小时前`;
+            if (days < 30) return `${days}天前`;
+            
+            return date.toLocaleDateString('zh-CN');
+        }
+
+        // 动态加载更多内容
+         document.addEventListener('DOMContentLoaded', function() {
+             const loadMoreBtn = document.querySelector('.text-center.py-4 button');
+             if (loadMoreBtn) {
+                 loadMoreBtn.addEventListener('click', async function() {
+                     this.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i> 加载中...';
+                     
+                     try {
+                         const currentThoughts = document.querySelectorAll('article:not(.border-primary)').length;
+                         const response = await fetch(`http://localhost:5002/square/thoughts?page=${Math.floor(currentThoughts / 20) + 2}`);
+                         const result = await response.json();
+                         
+                         if (result.success && result.data.thoughts && result.data.thoughts.length > 0) {
+                             // 添加新加载的思想元胞
+                             result.data.thoughts.forEach(thought => {
+                                 const thoughtElement = createThoughtCellElement(thought);
+                                 document.querySelector('.space-y-6').appendChild(thoughtElement);
+                             });
+                             
+                             this.innerHTML = '加载更多 <i class="fa fa-angle-down ml-1"></i>';
+                             
+                             // 如果没有更多内容了
+                             if (!result.data.has_more) {
+                                 this.innerHTML = '没有更多内容了';
+                                 this.disabled = true;
+                                 this.classList.add('opacity-50', 'cursor-not-allowed');
+                             }
+                         } else {
+                             this.innerHTML = '没有更多内容了';
+                             this.disabled = true;
+                             this.classList.add('opacity-50', 'cursor-not-allowed');
+                         }
+                     } catch (error) {
+                         console.error('加载更多失败:', error);
+                         this.innerHTML = '加载失败，请重试';
+                         setTimeout(() => {
+                             this.innerHTML = '加载更多 <i class="fa fa-angle-down ml-1"></i>';
+                         }, 2000);
+                     }
+                 });
+             }
+         });
+
+        // 点赞功能
+        function setupLikeButtons() {
+            document.querySelectorAll('.fa-heart-o, .fa-heart').forEach(heart => {
+                heart.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const parent = this.parentElement;
+                    const count = parent.querySelector('span');
+                    let currentCount = parseInt(count.textContent.replace(/,/g, ''));
+                    
+                    if (this.classList.contains('fa-heart-o')) {
+                        this.classList.remove('fa-heart-o');
+                        this.classList.add('fa-heart', 'text-red-500');
+                        count.textContent = (currentCount + 1).toLocaleString();
+                    } else {
+                        this.classList.remove('fa-heart', 'text-red-500');
+                        this.classList.add('fa-heart-o');
+                        count.textContent = (currentCount - 1).toLocaleString();
+                    }
+                });
+            });
+        }
+
+        // 页面加载时获取数据
+        document.addEventListener('DOMContentLoaded', function() {
+            loadThoughtCells();
+            setupLikeButtons();
+            setupFollowButtons();
+        });
+
+        // 关注功能示例
+        function setupFollowButtons() {
+            document.querySelectorAll('button').forEach(button => {
+                if (button.textContent.trim() === '关注') {
+                    button.addEventListener('click', function() {
+                        if (this.textContent.trim() === '关注') {
+                            this.textContent = '已关注';
+                            this.classList.remove('text-primary', 'hover:text-secondary');
+                            this.classList.add('text-gray-500', 'hover:text-gray-700');
+                        } else {
+                            this.textContent = '关注';
+                            this.classList.remove('text-gray-500', 'hover:text-gray-700');
+                            this.classList.add('text-primary', 'hover:text-secondary');
+                        }
+                    });
+                }
+            });
+        }
+
+        // ========== 发布思想元胞功能 ==========
+
+        // 发布思想元胞 API 调用
+        async function publishThought(thoughtData) {
+            try {
+                const API_BASE_URL = 'http://localhost:8000';
+                const token = localStorage.getItem('auth_token');
+
+                if (!token) {
+                    alert('请先登录');
+                    return false;
+                }
+
+                // 解析 token 获取用户 ID
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const userId = payload.user_id;
+
+                console.log('正在发布思想元胞...', thoughtData);
+
+                const response = await fetch(`${API_BASE_URL}/api/square/thoughts?user_id=${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(thoughtData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                console.log('发布响应:', result);
+
+                if (result.code === 200) {
+                    alert('发布成功！');
+                    return true;
+                } else {
+                    throw new Error(result.message || '发布失败');
+                }
+            } catch (error) {
+                console.error('发布失败:', error);
+                alert('发布失败: ' + error.message);
+                return false;
+            }
+        }
+
+        // 绑定发布按钮事件
+        document.addEventListener('DOMContentLoaded', function() {
+            const publishBtn = document.getElementById('publish-btn');
+
+            if (publishBtn) {
+                publishBtn.addEventListener('click', function() {
+                    // 简单的 prompt 方式发布（临时方案）
+                    const content = prompt('请输入思想元胞内容：');
+
+                    if (content && content.trim()) {
+                        const thoughtData = {
+                            content: content.trim(),
+                            images: [],
+                            visibility: 'public',
+                            tags: [],
+                            location: null
+                        };
+
+                        publishThought(thoughtData).then(success => {
+                            if (success) {
+                                // 刷新页面
+                                location.reload();
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

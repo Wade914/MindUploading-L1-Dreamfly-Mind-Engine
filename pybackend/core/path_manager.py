@@ -51,6 +51,7 @@ class PathManager:
         self.upload_thought_dir = self.upload_dir / settings.UPLOAD_THOUGHT_DIR
         self.upload_voice_dir = self.upload_dir / settings.UPLOAD_VOICE_DIR
         self.upload_image_dir = self.upload_dir / settings.UPLOAD_IMAGE_DIR
+        self.upload_video_dir = self.upload_dir / settings.UPLOAD_VIDEO_DIR
         self.upload_document_dir = self.upload_dir / settings.UPLOAD_DOCUMENT_DIR
         
         # 日志路径
@@ -65,10 +66,11 @@ class PathManager:
             self.upload_thought_dir,
             self.upload_voice_dir,
             self.upload_image_dir,
+            self.upload_video_dir,
             self.upload_document_dir,
             self.log_dir
         ]
-        
+
         for directory in directories:
             directory.mkdir(parents=True, exist_ok=True)
     
@@ -78,10 +80,11 @@ class PathManager:
             'thought': self.upload_thought_dir,
             'voice': self.upload_voice_dir,
             'image': self.upload_image_dir,
+            'video': self.upload_video_dir,
             'documents': self.upload_document_dir,
             'document': self.upload_document_dir
         }
-        
+
         return type_mapping.get(upload_type, self.upload_dir)
     
     def get_file_size_limit(self, upload_type: str) -> int:
@@ -90,10 +93,11 @@ class PathManager:
             'thought': settings.MAX_THOUGHT_SIZE,
             'voice': settings.MAX_VOICE_SIZE,
             'image': settings.MAX_IMAGE_SIZE,
+            'video': settings.MAX_VIDEO_SIZE,
             'documents': settings.MAX_DOCUMENT_SIZE,
             'document': settings.MAX_DOCUMENT_SIZE
         }
-        
+
         return size_mapping.get(upload_type, settings.MAX_FILE_SIZE)
     
     def get_allowed_types(self, upload_type: str) -> list:
@@ -102,10 +106,11 @@ class PathManager:
             'thought': settings.ALLOWED_THOUGHT_TYPES,
             'voice': settings.ALLOWED_VOICE_TYPES,
             'image': settings.ALLOWED_IMAGE_TYPES,
+            'video': settings.ALLOWED_VIDEO_TYPES,
             'documents': settings.ALLOWED_DOCUMENT_TYPES,
             'document': settings.ALLOWED_DOCUMENT_TYPES
         }
-        
+
         return type_mapping.get(upload_type, [])
     
     def get_relative_path(self, full_path: Path) -> str:
@@ -128,6 +133,7 @@ class PathManager:
     - Thought: {self.upload_thought_dir}
     - Voice: {self.upload_voice_dir}
     - Image: {self.upload_image_dir}
+    - Video: {self.upload_video_dir}
     - Document: {self.upload_document_dir}
 """
 

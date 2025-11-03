@@ -150,6 +150,77 @@ async def create_business_tables(engine):
     );
     """
 
+    # 10. 思想元胞表 (Square 广场)
+    thought_cells_sql = """
+    CREATE TABLE IF NOT EXISTS thought_cells (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id VARCHAR(50) NOT NULL,
+        content TEXT NOT NULL,
+        images TEXT,
+        visibility VARCHAR(20) DEFAULT 'public',
+        likes_count INTEGER DEFAULT 0,
+        comments_count INTEGER DEFAULT 0,
+        shares_count INTEGER DEFAULT 0,
+        tags TEXT,
+        location VARCHAR(200),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """
+
+    # 11. 点赞表 (Square 广场)
+    thought_likes_sql = """
+    CREATE TABLE IF NOT EXISTS thought_likes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        thought_id INTEGER NOT NULL,
+        user_id VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(thought_id, user_id)
+    );
+    """
+
+    # 12. 评论表 (Square 广场)
+    thought_comments_sql = """
+    CREATE TABLE IF NOT EXISTS thought_comments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        thought_id INTEGER NOT NULL,
+        user_id VARCHAR(50) NOT NULL,
+        content TEXT NOT NULL,
+        parent_id INTEGER,
+        likes_count INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """
+
+    # 13. 用户关注表 (Square 广场)
+    user_follows_sql = """
+    CREATE TABLE IF NOT EXISTS user_follows (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        follower_id VARCHAR(50) NOT NULL,
+        following_id VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(follower_id, following_id)
+    );
+    """
+
+    # 14. 用户公开资料表 (Square 广场)
+    user_profiles_sql = """
+    CREATE TABLE IF NOT EXISTS user_profiles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id VARCHAR(50) NOT NULL UNIQUE,
+        avatar_url VARCHAR(500),
+        bio TEXT,
+        location VARCHAR(200),
+        website VARCHAR(500),
+        followers_count INTEGER DEFAULT 0,
+        following_count INTEGER DEFAULT 0,
+        thoughts_count INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """
+
     # 执行SQL语句
     async with engine.begin() as conn:
         await conn.execute(text(user_consciousness_assets_sql))
@@ -161,6 +232,11 @@ async def create_business_tables(engine):
         await conn.execute(text(notes_sql))
         await conn.execute(text(note_folders_sql))
         await conn.execute(text(interaction_history_sql))
+        await conn.execute(text(thought_cells_sql))
+        await conn.execute(text(thought_likes_sql))
+        await conn.execute(text(thought_comments_sql))
+        await conn.execute(text(user_follows_sql))
+        await conn.execute(text(user_profiles_sql))
         print("✅ 业务数据表创建成功！")
 
 

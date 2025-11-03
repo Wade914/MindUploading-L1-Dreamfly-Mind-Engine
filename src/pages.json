@@ -101,6 +101,62 @@
 					"titleNView": false
 				}
 			}
+		},
+		{
+			"path": "pages/square/index",
+			"style": {
+				"navigationBarTitleText": "云己广场",
+				"navigationStyle": "custom",
+				"backgroundColor": "#f9fafb"
+			}
+		},
+		{
+			"path": "pages/square/homepage/index",
+			"style": {
+				"navigationBarTitleText": "个人主页",
+				"navigationStyle": "custom",
+				"backgroundColor": "#f9fafb"
+			}
+		},
+		{
+			"path": "pages/square/profile/index",
+			"style": {
+				"navigationBarTitleText": "用户资料",
+				"navigationStyle": "custom",
+				"backgroundColor": "#f9fafb"
+			}
+		},
+		{
+			"path": "pages/square/mindos/index",
+			"style": {
+				"navigationBarTitleText": "MindOS",
+				"navigationStyle": "custom",
+				"backgroundColor": "#f9fafb"
+			}
+		},
+		{
+			"path": "pages/square/wittgenstein/index",
+			"style": {
+				"navigationBarTitleText": "维特根斯坦",
+				"navigationStyle": "custom",
+				"backgroundColor": "#f9fafb"
+			}
+		},
+		{
+			"path": "pages/square/following/index",
+			"style": {
+				"navigationBarTitleText": "关注",
+				"navigationStyle": "custom",
+				"backgroundColor": "#f9fafb"
+			}
+		},
+		{
+			"path": "pages/square/messages/index",
+			"style": {
+				"navigationBarTitleText": "消息",
+				"navigationStyle": "custom",
+				"backgroundColor": "#f9fafb"
+			}
 		}
 	],
 	"tabBar": {

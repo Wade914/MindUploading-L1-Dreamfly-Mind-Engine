@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindOS - 心智操作系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --secondary: #8b5cf6;
+            --accent: #06b6d4;
+        }
+        .bg-primary { background-color: var(--primary); }
+        .bg-secondary { background-color: var(--secondary); }
+        .bg-accent { background-color: var(--accent); }
+        .text-primary { color: var(--primary); }
+        .text-secondary { color: var(--secondary); }
+        .text-accent { color: var(--accent); }
+        .hover\:bg-primary\/90:hover { background-color: rgba(59, 130, 246, 0.9); }
+        .hover\:bg-secondary\/90:hover { background-color: rgba(139, 92, 246, 0.9); }
+        .hover\:bg-accent\/90:hover { background-color: rgba(6, 182, 212, 0.9); }
+        .hover\:text-primary:hover { color: var(--primary); }
+        .hover\:text-secondary:hover { color: var(--secondary); }
+        .hover\:text-accent:hover { color: var(--accent); }
+        .border-primary { border-color: var(--primary); }
+        .border-secondary { border-color: var(--secondary); }
+        .border-accent { border-color: var(--accent); }
+        .focus\:ring-primary:focus { --tw-ring-color: var(--primary); }
+        .focus\:ring-secondary:focus { --tw-ring-color: var(--secondary); }
+        .focus\:ring-accent:focus { --tw-ring-color: var(--accent); }
+        .focus\:border-primary:focus { border-color: var(--primary); }
+        .focus\:border-secondary:focus { border-color: var(--secondary); }
+        .focus\:border-accent:focus { border-color: var(--accent); }
+        .from-primary { --tw-gradient-from: var(--primary); }
+        .to-secondary { --tw-gradient-to: var(--secondary); }
+        .to-accent { --tw-gradient-to: var(--accent); }
+        
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* 编辑器样式 */
+        .editor-content {
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .editor-content:focus {
+            outline: none;
+        }
+        .editor-content:empty:before {
+            content: attr(data-placeholder);
+            color: #9ca3af;
+            font-style: italic;
+        }
+        
+        /* 卡片悬停效果 */
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        /* 标签样式 */
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin: 2px;
+        }
+        .tag-blue {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        .tag-purple {
+            background-color: rgba(139, 92, 246, 0.1);
+            color: var(--secondary);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        .tag-cyan {
+            background-color: rgba(6, 182, 212, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+        }
+        
+        /* 侧边栏折叠动画 */
+        .sidebar-transition {
+            transition: all 0.3s ease;
+        }
+        
+        /* 编辑器工具栏 */
+        .toolbar-btn {
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .toolbar-btn:hover {
+            background-color: rgba(0,0,0,0.05);
+            border-color: rgba(0,0,0,0.1);
+        }
+        .toolbar-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- 顶部导航栏 -->
+    <header class="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="javascript:navigateTo('homepage')" class="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors">
+                        <i class="fas fa-brain text-xl"></i>
+                        <span class="text-xl font-bold">MindOS</span>
+                    </a>
+                    <span class="text-gray-400">|</span>
+                    <span class="text-gray-600">心智操作系统</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="newArticleBtn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-plus mr-2"></i>新建文章
+                    </button>
+                    <button id="importArticleBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-file-import mr-2"></i>导入文章
+                    </button>
+                    <div class="relative">
+                        <input id="searchInput" type="text" placeholder="搜索文章..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary w-64">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容区 -->
+    <div class="container mx-auto px-4 py-6">
+        <div class="flex gap-6">
+            <!-- 左侧边栏 -->
+            <aside class="w-64 bg-white rounded-xl shadow-sm p-6">
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">知识库</h3>
+                    <div class="space-y-2">
+                        <button class="w-full text-left px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium flex items-center">
+                            <i class="fas fa-folder-open mr-3"></i>
+                            所有文章
+                            <span id="totalCount" class="ml-auto bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full">0</span>
+                        </button>
+                        <button class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 transition-colors flex items-center">
+                            <i class="fas fa-star mr-3"></i>
+                            收藏文章
+                            <span id="starredCount" class="ml-auto bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full">0</span>
+                        </button>
+                        <button class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 transition-colors flex items-center">
+                            <i class="fas fa-tag mr-3"></i>
+                            标签管理
+                        </button>
+                        <button class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 transition-colors flex items-center">
+                            <i class="fas fa-archive mr-3"></i>
+                            归档文章
+                            <span id="archivedCount" class="ml-auto bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full">0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-medium text-gray-700">标签</h4>
+                        <button id="addTagBtn" class="text-primary hover:text-primary/80 text-sm">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div id="tagList" class="flex flex-wrap gap-2">
+                        <span class="tag tag-blue">哲学</span>
+                        <span class="tag tag-purple">科技</span>
+                        <span class="tag tag-cyan">人工智能</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">快速统计</h4>
+                    <div class="space-y-2 text-sm text-gray-600">
+                        <div class="flex justify-between">
+                            <span>总文章数</span>
+                            <span id="totalArticles" class="font-medium">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>本月新增</span>
+                            <span id="monthlyArticles" class="font-medium">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>总字数</span>
+                            <span id="totalWords" class="font-medium">0</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- 中间内容区 -->
+            <main class="flex-1">
+                <!-- 文章列表 -->
+                <div id="articleList" class="space-y-4">
+                    <!-- 文章卡片将在这里动态生成 -->
+                </div>
+
+                <!-- 空状态 -->
+                <div id="emptyState" class="bg-white rounded-xl shadow-sm p-12 text-center">
+                    <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-book-open text-4xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">还没有任何文章</h3>
+                    <p class="text-gray-600 mb-6">开始创建你的第一篇知识文章吧！</p>
+                    <button id="createFirstArticleBtn" class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg transition-colors">
+                        创建第一篇文章
+                    </button>
+                </div>
+            </main>
+
+            <!-- 右侧编辑器（默认隐藏） -->
+            <aside id="editorPanel" class="hidden fixed inset-0 bg-white z-50 overflow-y-auto">
+                <div class="flex items-center justify-between mb-6 p-6 border-b border-gray-200">
+                    <div class="flex items-center space-x-4">
+                        <h3 class="text-2xl font-bold text-gray-900">文章编辑器</h3>
+                        <div class="text-sm text-gray-500" id="editorStatus">准备就绪</div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button id="minimizeEditorBtn" class="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition-colors" title="最小化">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button id="closeEditorBtn" class="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition-colors" title="关闭">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="px-6 mb-6">
+                    <input id="articleTitle" type="text" placeholder="请输入文章标题..." class="w-full px-6 py-4 text-3xl font-bold border-0 focus:outline-none focus:ring-0 bg-transparent placeholder-gray-400">
+                </div>
+
+                <div class="px-6 mb-6">
+                    <div class="flex flex-wrap gap-3 mb-4 p-4 bg-gray-50 rounded-lg">
+                        <button class="toolbar-btn" data-action="bold" title="粗体">
+                            <i class="fas fa-bold"></i>
+                        </button>
+                        <button class="toolbar-btn" data-action="italic" title="斜体">
+                            <i class="fas fa-italic"></i>
+                        </button>
+                        <button class="toolbar-btn" data-action="underline" title="下划线">
+                            <i class="fas fa-underline"></i>
+                        </button>
+                        <div class="w-px bg-gray-300 mx-2"></div>
+                        <button class="toolbar-btn" data-action="quote" title="引用">
+                            <i class="fas fa-quote-left"></i>
+                        </button>
+                        <button class="toolbar-btn" data-action="code" title="代码">
+                            <i class="fas fa-code"></i>
+                        </button>
+                        <button class="toolbar-btn" data-action="link" title="链接">
+                            <i class="fas fa-link"></i>
+                        </button>
+                        <button class="toolbar-btn" data-action="image" title="图片">
+                            <i class="fas fa-image"></i>
+                        </button>
+                        <button class="toolbar-btn" data-action="list" title="列表">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                    <div id="articleContent" class="editor-content min-h-[60vh] text-lg leading-relaxed focus:outline-none" contenteditable="true" data-placeholder="开始写作..."></div>
+                </div>
+
+                <div class="px-6 mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <label class="text-sm font-medium text-gray-700">文章标签</label>
+                        <div class="text-sm text-gray-500" id="wordCountDisplay">0 字</div>
+                    </div>
+                    <input id="articleTags" type="text" placeholder="添加标签，用逗号分隔" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+
+                <div class="px-6 mb-6">
+                    <label class="flex items-center p-4 bg-gray-50 rounded-lg">
+                        <input id="articleStarred" type="checkbox" class="mr-3 w-4 h-4 text-primary">
+                        <span class="text-gray-700">收藏这篇文章</span>
+                    </label>
+                </div>
+
+                <div class="px-6 flex space-x-4">
+                    <button id="saveArticleBtn" class="flex-1 bg-primary hover:bg-primary/90 text-white py-3 rounded-lg transition-colors font-medium">
+                        <i class="fas fa-save mr-2"></i>保存文章
+                    </button>
+                    <button id="publishArticleBtn" class="flex-1 bg-secondary hover:bg-secondary/90 text-white py-3 rounded-lg transition-colors font-medium">
+                        <i class="fas fa-paper-plane mr-2"></i>发布文章
+                    </button>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- 导入文章模态框 -->
+    <div id="importModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-gray-900">导入文章</h2>
+                <button id="closeImportModalBtn" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">选择导入方式</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button class="import-option p-4 border-2 border-gray-300 rounded-lg hover:border-primary transition-colors text-center">
+                            <i class="fas fa-file-text text-3xl text-gray-400 mb-2"></i>
+                            <p class="font-medium">文本导入</p>
+                            <p class="text-sm text-gray-500">粘贴文章内容</p>
+                        </button>
+                        <button class="import-option p-4 border-2 border-gray-300 rounded-lg hover:border-primary transition-colors text-center">
+                            <i class="fas fa-file-upload text-3xl text-gray-400 mb-2"></i>
+                            <p class="font-medium">文件上传</p>
+                            <p class="text-sm text-gray-500">上传文档文件</p>
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">文章标题</label>
+                    <input type="text" id="importTitle" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">文章内容</label>
+                    <textarea id="importContent" rows="8" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" placeholder="粘贴文章内容..."></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button id="cancelImportBtn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">取消</button>
+                    <button id="confirmImportBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">导入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // MindOS 数据管理
+        class MindOS {
+            constructor() {
+                this.articles = this.loadArticles();
+                this.tags = this.loadTags();
+                this.currentArticle = null;
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.renderArticles();
+                this.updateStats();
+            }
+
+            // 从localStorage加载文章
+            loadArticles() {
+                const saved = localStorage.getItem('mindos_articles');
+                return saved ? JSON.parse(saved) : [];
+            }
+
+            // 保存文章到localStorage
+            saveArticles() {
+                localStorage.setItem('mindos_articles', JSON.stringify(this.articles));
+            }
+
+            // 从localStorage加载标签
+            loadTags() {
+                const saved = localStorage.getItem('mindos_tags');
+                return saved ? JSON.parse(saved) : ['哲学', '科技', '人工智能'];
+            }
+
+            // 保存标签到localStorage
+            saveTags() {
+                localStorage.setItem('mindos_tags', JSON.stringify(this.tags));
+            }
+
+            // 生成唯一ID
+            generateId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            }
+
+            // 创建新文章
+            createArticle(title = '', content = '', tags = []) {
+                const article = {
+                    id: this.generateId(),
+                    title: title || '无标题文章',
+                    content: content,
+                    tags: tags,
+                    starred: false,
+                    archived: false,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    wordCount: content.length
+                };
+                this.articles.unshift(article);
+                this.saveArticles();
+                return article;
+            }
+
+            // 更新文章
+            updateArticle(id, updates) {
+                const index = this.articles.findIndex(a => a.id === id);
+                if (index !== -1) {
+                    this.articles[index] = {
+                        ...this.articles[index],
+                        ...updates,
+                        updatedAt: new Date().toISOString(),
+                        wordCount: updates.content ? updates.content.length : this.articles[index].content.length
+                    };
+                    this.saveArticles();
+                    return this.articles[index];
+                }
+                return null;
+            }
+
+            // 删除文章
+            deleteArticle(id) {
+                this.articles = this.articles.filter(a => a.id !== id);
+                this.saveArticles();
+            }
+
+            // 获取文章列表
+            getArticles(filter = 'all') {
+                switch (filter) {
+                    case 'starred':
+                        return this.articles.filter(a => a.starred && !a.archived);
+                    case 'archived':
+                        return this.articles.filter(a => a.archived);
+                    default:
+                        return this.articles.filter(a => !a.archived);
+                }
+            }
+
+            // 搜索文章
+            searchArticles(query) {
+                if (!query) return this.getArticles();
+                return this.articles.filter(a => 
+                    !a.archived && (
+                        a.title.toLowerCase().includes(query.toLowerCase()) ||
+                        a.content.toLowerCase().includes(query.toLowerCase()) ||
+                        a.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+                    )
+                );
+            }
+
+            // 渲染文章列表
+            renderArticles(articles = null) {
+                const articleList = document.getElementById('articleList');
+                const emptyState = document.getElementById('emptyState');
+                const articlesToRender = articles || this.getArticles();
+
+                if (articlesToRender.length === 0) {
+                    articleList.style.display = 'none';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                articleList.style.display = 'block';
+                emptyState.style.display = 'none';
+
+                articleList.innerHTML = articlesToRender.map(article => this.renderArticleCard(article)).join('');
+            }
+
+            // 渲染单篇文章卡片
+            renderArticleCard(article) {
+                const date = new Date(article.createdAt).toLocaleDateString('zh-CN');
+                const tagsHtml = article.tags.map(tag => `<span class="tag tag-blue">${tag}</span>`).join('');
+                const starredIcon = article.starred ? 'fas fa-star text-yellow-500' : 'far fa-star text-gray-400';
+                
+                return `
+                    <div class="bg-white rounded-xl shadow-sm p-6 card-hover cursor-pointer" data-article-id="${article.id}">
+                        <div class="flex items-start justify-between mb-3">
+                            <h3 class="text-lg font-semibold text-gray-900 flex-1 mr-4">${article.title}</h3>
+                            <div class="flex items-center space-x-2">
+                                <button class="star-btn text-lg hover:text-yellow-500 transition-colors" data-article-id="${article.id}">
+                                    <i class="${starredIcon}"></i>
+                                </button>
+                                <button class="delete-btn text-lg text-red-400 hover:text-red-600 transition-colors" data-article-id="${article.id}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-gray-600 text-sm mb-3 line-clamp-3">
+                            ${this.stripHtml(article.content).substring(0, 200)}${article.content.length > 200 ? '...' : ''}
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex flex-wrap gap-1">
+                                ${tagsHtml}
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                ${date} · ${article.wordCount} 字
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 移除HTML标签
+            stripHtml(html) {
+                const tmp = document.createElement('div');
+                tmp.innerHTML = html;
+                return tmp.textContent || tmp.innerText || '';
+            }
+
+            // 更新统计信息
+            updateStats() {
+                const total = this.articles.length;
+                const starred = this.articles.filter(a => a.starred).length;
+                const archived = this.articles.filter(a => a.archived).length;
+                const monthly = this.articles.filter(a => {
+                    const date = new Date(a.createdAt);
+                    const now = new Date();
+                    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+                }).length;
+                const totalWords = this.articles.reduce((sum, a) => sum + a.wordCount, 0);
+
+                document.getElementById('totalCount').textContent = total;
+                document.getElementById('starredCount').textContent = starred;
+                document.getElementById('archivedCount').textContent = archived;
+                document.getElementById('totalArticles').textContent = total;
+                document.getElementById('monthlyArticles').textContent = monthly;
+                document.getElementById('totalWords').textContent = totalWords.toLocaleString();
+            }
+
+            // 绑定事件
+            bindEvents() {
+                // 新建文章
+                document.getElementById('newArticleBtn').addEventListener('click', () => {
+                    this.openEditor();
+                });
+
+                // 创建第一篇文章
+                document.getElementById('createFirstArticleBtn').addEventListener('click', () => {
+                    this.openEditor();
+                });
+
+                // 导入文章
+                document.getElementById('importArticleBtn').addEventListener('click', () => {
+                    this.openImportModal();
+                });
+
+                // 搜索
+                document.getElementById('searchInput').addEventListener('input', (e) => {
+                    const results = this.searchArticles(e.target.value);
+                    this.renderArticles(results);
+                });
+
+                // 侧边栏筛选
+                document.querySelectorAll('aside button').forEach(btn => {
+                    if (btn.id) return; // 跳过有ID的按钮
+                    btn.addEventListener('click', (e) => {
+                        // 移除其他按钮的激活状态
+                        document.querySelectorAll('aside button').forEach(b => {
+                            if (!b.id) {
+                                b.classList.remove('bg-primary/10', 'text-primary', 'font-medium');
+                                b.classList.add('text-gray-700');
+                            }
+                        });
+                        
+                        // 激活当前按钮
+                        e.target.classList.add('bg-primary/10', 'text-primary', 'font-medium');
+                        e.target.classList.remove('text-gray-700');
+                        
+                        // 筛选文章
+                        const filter = e.target.textContent.includes('收藏') ? 'starred' : 
+                                     e.target.textContent.includes('归档') ? 'archived' : 'all';
+                        this.renderArticles(this.getArticles(filter));
+                    });
+                });
+
+                // 文章卡片点击
+                document.getElementById('articleList').addEventListener('click', (e) => {
+                    const card = e.target.closest('.card-hover');
+                    if (!card) return;
+                    
+                    const articleId = card.dataset.articleId;
+                    const article = this.articles.find(a => a.id === articleId);
+                    
+                    if (e.target.closest('.star-btn')) {
+                        this.toggleStar(articleId);
+                    } else if (e.target.closest('.delete-btn')) {
+                        this.deleteArticleWithConfirm(articleId);
+                    } else {
+                        this.openEditor(article);
+                    }
+                });
+
+                // 编辑器事件
+                this.bindEditorEvents();
+                
+                // 导入模态框事件
+                this.bindImportEvents();
+            }
+
+            // 绑定编辑器事件
+            bindEditorEvents() {
+                // 关闭编辑器
+                document.getElementById('closeEditorBtn').addEventListener('click', () => {
+                    this.closeEditor();
+                });
+
+                // 最小化编辑器
+                document.getElementById('minimizeEditorBtn').addEventListener('click', () => {
+                    const editor = document.getElementById('editorPanel');
+                    const content = editor.querySelector('.px-6');
+                    if (content.style.display === 'none') {
+                        content.style.display = 'block';
+                        document.getElementById('minimizeEditorBtn').innerHTML = '<i class="fas fa-minus"></i>';
+                    } else {
+                        content.style.display = 'none';
+                        document.getElementById('minimizeEditorBtn').innerHTML = '<i class="fas fa-expand"></i>';
+                    }
+                });
+
+                // 保存文章
+                document.getElementById('saveArticleBtn').addEventListener('click', () => {
+                    this.saveCurrentArticle();
+                });
+
+                // 发布文章
+                document.getElementById('publishArticleBtn').addEventListener('click', () => {
+                    this.publishCurrentArticle();
+                });
+
+                // 工具栏按钮
+                document.querySelectorAll('.toolbar-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const action = btn.dataset.action;
+                        this.execEditorCommand(action);
+                    });
+                });
+
+                // 编辑器内容变化
+                document.getElementById('articleContent').addEventListener('input', () => {
+                    this.updateWordCount();
+                });
+            }
+
+            // 绑定导入事件
+            bindImportEvents() {
+                // 关闭导入模态框
+                document.getElementById('closeImportModalBtn').addEventListener('click', () => {
+                    this.closeImportModal();
+                });
+
+                document.getElementById('cancelImportBtn').addEventListener('click', () => {
+                    this.closeImportModal();
+                });
+
+                // 导入选项
+                document.querySelectorAll('.import-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        document.querySelectorAll('.import-option').forEach(o => {
+                            o.classList.remove('border-primary', 'bg-primary/5');
+                            o.classList.add('border-gray-300');
+                        });
+                        e.currentTarget.classList.add('border-primary', 'bg-primary/5');
+                        e.currentTarget.classList.remove('border-gray-300');
+                    });
+                });
+
+                // 确认导入
+                document.getElementById('confirmImportBtn').addEventListener('click', () => {
+                    this.importArticle();
+                });
+            }
+
+            // 打开编辑器
+            openEditor(article = null) {
+                this.currentArticle = article;
+                const editorPanel = document.getElementById('editorPanel');
+                
+                if (article) {
+                    document.getElementById('articleTitle').value = article.title;
+                    document.getElementById('articleContent').innerHTML = article.content;
+                    document.getElementById('articleTags').value = article.tags.join(', ');
+                    document.getElementById('articleStarred').checked = article.starred;
+                } else {
+                    document.getElementById('articleTitle').value = '';
+                    document.getElementById('articleContent').innerHTML = '';
+                    document.getElementById('articleTags').value = '';
+                    document.getElementById('articleStarred').checked = false;
+                }
+                
+                editorPanel.classList.remove('hidden');
+                this.updateWordCount();
+            }
+
+            // 关闭编辑器
+            closeEditor() {
+                document.getElementById('editorPanel').classList.add('hidden');
+                this.currentArticle = null;
+            }
+
+            // 保存当前文章
+            saveCurrentArticle() {
+                const title = document.getElementById('articleTitle').value.trim();
+                const content = document.getElementById('articleContent').innerHTML.trim();
+                const tags = document.getElementById('articleTags').value.split(',').map(tag => tag.trim()).filter(tag => tag);
+                const starred = document.getElementById('articleStarred').checked;
+
+                if (!title && !content) {
+                    alert('请输入文章标题或内容');
+                    return;
+                }
+
+                if (this.currentArticle) {
+                    this.updateArticle(this.currentArticle.id, {
+                        title: title || '无标题文章',
+                        content: content,
+                        tags: tags,
+                        starred: starred
+                    });
+                } else {
+                    this.createArticle(title || '无标题文章', content, tags);
+                }
+
+                this.renderArticles();
+                this.updateStats();
+                this.closeEditor();
+                
+                alert('文章已保存');
+            }
+
+            // 发布当前文章
+            publishCurrentArticle() {
+                this.saveCurrentArticle();
+                alert('文章已发布');
+            }
+
+            // 执行编辑器命令
+            execEditorCommand(command) {
+                const editor = document.getElementById('articleContent');
+                editor.focus();
+                
+                switch (command) {
+                    case 'bold':
+                        document.execCommand('bold', false, null);
+                        break;
+                    case 'italic':
+                        document.execCommand('italic', false, null);
+                        break;
+                    case 'underline':
+                        document.execCommand('underline', false, null);
+                        break;
+                    case 'quote':
+                        document.execCommand('formatBlock', false, 'blockquote');
+                        break;
+                    case 'code':
+                        document.execCommand('formatBlock', false, 'pre');
+                        break;
+                    case 'link':
+                        const url = prompt('请输入链接地址:');
+                        if (url) {
+                            document.execCommand('createLink', false, url);
+                        }
+                        break;
+                    case 'image':
+                        const imgUrl = prompt('请输入图片地址:');
+                        if (imgUrl) {
+                            document.execCommand('insertImage', false, imgUrl);
+                        }
+                        break;
+                    case 'list':
+                        document.execCommand('insertUnorderedList', false, null);
+                        break;
+                }
+                
+                // 更新工具栏按钮状态
+                this.updateToolbarState();
+            }
+
+            // 更新工具栏状态
+            updateToolbarState() {
+                document.querySelectorAll('.toolbar-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+            }
+
+            // 更新字数统计
+            updateWordCount() {
+                const editor = document.getElementById('articleContent');
+                const text = editor.innerText || editor.textContent || '';
+                const wordCount = text.trim().length;
+                document.getElementById('wordCountDisplay').textContent = wordCount + ' 字';
+            }
+
+            // 切换收藏状态
+            toggleStar(articleId) {
+                const article = this.articles.find(a => a.id === articleId);
+                if (article) {
+                    this.updateArticle(articleId, { starred: !article.starred });
+                    this.renderArticles();
+                    this.updateStats();
+                }
+            }
+
+            // 删除文章（带确认）
+            deleteArticleWithConfirm(articleId) {
+                if (confirm('确定要删除这篇文章吗？')) {
+                    this.deleteArticle(articleId);
+                    this.renderArticles();
+                    this.updateStats();
+                }
+            }
+
+            // 打开导入模态框
+            openImportModal() {
+                document.getElementById('importModal').classList.remove('hidden');
+            }
+
+            // 关闭导入模态框
+            closeImportModal() {
+                document.getElementById('importModal').classList.add('hidden');
+                document.getElementById('importTitle').value = '';
+                document.getElementById('importContent').value = '';
+            }
+
+            // 导入文章
+            importArticle() {
+                const title = document.getElementById('importTitle').value.trim();
+                const content = document.getElementById('importContent').value.trim();
+                
+                if (!content) {
+                    alert('请输入文章内容');
+                    return;
+                }
+
+                const article = this.createArticle(title || '导入文章', content.replace(/\n/g, '<br>'));
+                this.closeImportModal();
+                this.renderArticles();
+                this.updateStats();
+                
+                alert('文章导入成功');
+            }
+        }
+
+        // 初始化MindOS
+        document.addEventListener('DOMContentLoaded', function() {
+            new MindOS();
+        });
+    </script>
+
+    <!-- API配置和用户认证 -->
+    <script src="./js/api-config.js"></script>
+</body>
+</html>

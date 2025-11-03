@@ -56,7 +56,18 @@ const form = ref({
 })
 
 const handleBack = () => {
-  uni.navigateBack()
+  // 获取当前页面栈
+  const pages = getCurrentPages()
+
+  // 如果页面栈只有1个页面（说明是直接访问登录页），则跳转到欢迎页
+  if (pages.length <= 1) {
+    uni.redirectTo({
+      url: '/pages/welcome/index'
+    })
+  } else {
+    // 否则正常返回上一页
+    uni.navigateBack()
+  }
 }
 
 const handleLogin = async () => {
@@ -252,4 +263,23 @@ const handleForgotPassword = () => {
     }
   }
 }
-</style> 
+
+/* 修复 uni-app Toast 图标居中问题 */
+::v-deep .uni-toast {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+::v-deep .uni-toast .uni-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto !important;
+}
+
+::v-deep .uni-toast .uni-toast__content {
+  text-align: center !important;
+}
+</style>

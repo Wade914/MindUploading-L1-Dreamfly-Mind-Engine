@@ -24,15 +24,17 @@ class JWTBearer(HTTPBearer):
             if not credentials.scheme == "Bearer":
                 print(f"❌ JWT认证失败: 无效的认证方案 {credentials.scheme}")
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Invalid authentication scheme."
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid authentication scheme.",
+                    headers={"WWW-Authenticate": "Bearer"}
                 )
 
             if not self.verify_jwt(credentials.credentials):
-                print(f"❌ JWT认证失败: token验证失败")
+                print(f"❌ JWT认证失败: token验证失败（可能已过期）")
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Invalid token or expired token."
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid token or expired token.",
+                    headers={"WWW-Authenticate": "Bearer"}
                 )
 
             print(f"✅ JWT认证成功")
@@ -40,8 +42,9 @@ class JWTBearer(HTTPBearer):
         else:
             print(f"❌ JWT认证失败: 缺少Authorization header")
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Invalid authorization code."
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authorization code.",
+                headers={"WWW-Authenticate": "Bearer"}
             )
     
     def verify_jwt(self, token: str) -> bool:

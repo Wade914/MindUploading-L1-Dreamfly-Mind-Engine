@@ -6,10 +6,12 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from core.exception import http_error_handler, unicorn_exception_handler, UnicornException, http422_error_handler
 from fastapi import HTTPException
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
+from core.path_manager import get_path_manager
 
 # 导入路由
 from api.endpoints.auth.view import router as auth_router
@@ -22,6 +24,7 @@ from api.endpoints.documents.view import router as documents_router
 from api.endpoints.notes.view import router as notes_router
 from api.endpoints.social.view import router as social_router
 from api.endpoints.interaction.view import router as interaction_router
+from api.endpoints.square.view import router as square_router
 
 app = FastAPI(
     title="DreamFly API",
@@ -57,6 +60,11 @@ app.include_router(documents_router, tags=["文档管理"])
 app.include_router(notes_router, tags=["笔记管理"])
 app.include_router(social_router, tags=["社交网络"])
 app.include_router(interaction_router, prefix="/api", tags=["交互管理"])
+app.include_router(square_router, tags=["广场"])
+
+# 挂载静态文件目录
+path_manager = get_path_manager()
+app.mount("/uploads", StaticFiles(directory=str(path_manager.upload_dir)), name="uploads")
 
 @app.get("/")
 async def root():
