@@ -246,6 +246,41 @@
                                 </div>
                             </div>
 
+                            <!-- 话题标签区域 -->
+                            <div id="quick-tags-container" class="hidden mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <!-- 已选择的话题标签 -->
+                                <div id="quick-selected-tags" class="flex flex-wrap gap-2 mb-2 min-h-[24px]">
+                                    <span class="text-sm text-gray-400">暂无话题</span>
+                                </div>
+
+                                <!-- 话题输入框 -->
+                                <div class="relative">
+                                    <input
+                                        type="text"
+                                        id="quick-tags-input"
+                                        placeholder="输入话题后按回车添加"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                                    >
+                                    <span class="absolute right-3 top-2 text-gray-400 text-xs">按回车添加</span>
+                                </div>
+
+                                <!-- 热门话题建议 -->
+                                <div class="mt-2">
+                                    <p class="text-xs text-gray-500 mb-1">热门话题：</p>
+                                    <div class="flex flex-wrap gap-1">
+                                        <button type="button" class="quick-hot-tag-btn text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full hover:bg-blue-100 transition-custom" data-tag="使用指南">
+                                            #使用指南
+                                        </button>
+                                        <button type="button" class="quick-hot-tag-btn text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full hover:bg-blue-100 transition-custom" data-tag="云己入门">
+                                            #云己入门
+                                        </button>
+                                        <button type="button" class="quick-hot-tag-btn text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full hover:bg-blue-100 transition-custom" data-tag="数字永生">
+                                            #数字永生
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="flex justify-between mt-4">
                                 <div class="flex space-x-4">
                                     <!-- 隐藏的文件输入框 -->
@@ -263,6 +298,10 @@
                                     <button id="link-add-btn" class="flex items-center text-gray-500 hover:text-primary transition-custom">
                                         <i class="fa fa-link text-xl mr-1"></i>
                                         <span>链接</span>
+                                    </button>
+                                    <button id="quick-tags-btn" class="flex items-center text-gray-500 hover:text-primary transition-custom">
+                                        <i class="fa fa-hashtag text-xl mr-1"></i>
+                                        <span>话题</span>
                                     </button>
                                 </div>
                                 <button id="quick-post-btn" class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-6 rounded-full transition-custom disabled:opacity-50 disabled:cursor-not-allowed" disabled>
@@ -780,6 +819,20 @@
             const isFollowing = thought.is_following || false;
             const isBookmarked = thought.is_bookmarked || false;
 
+            // 计算生命天数
+            let lifeDayText = '';
+            if (thought.user_birth && thought.created_at) {
+                try {
+                    const birthDate = new Date(thought.user_birth);
+                    const postDate = new Date(thought.created_at);
+                    const diffTime = Math.abs(postDate - birthDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    lifeDayText = ` · 生命第${diffDays}天`;
+                } catch (error) {
+                    console.error('计算生命天数失败:', error);
+                }
+            }
+
             // 获取当前用户ID
             const token = localStorage.getItem('auth_token');
             let currentUserId = null;
@@ -799,14 +852,14 @@
                         src="${avatarUrl}"
                         alt="${username}"
                         class="w-10 h-10 rounded-full object-cover flex-shrink-0 cursor-pointer"
-                        onclick="navigateTo('homepage')"
+                        onclick="navigateTo('homepage', { user_id: '${thought.user_id}' })"
                     >
                     <div class="flex-1">
                         <div class="flex items-center space-x-2">
-                            <h3 class="font-bold text-gray-900 cursor-pointer hover:text-primary" onclick="navigateTo('homepage')">${username}</h3>
+                            <h3 class="font-bold text-gray-900 cursor-pointer hover:text-primary" onclick="navigateTo('homepage', { user_id: '${thought.user_id}' })">${username}</h3>
                             <span class="text-primary text-sm">思想元胞</span>
                         </div>
-                        <p class="text-sm text-gray-500">${formatDate(thought.created_at)}</p>
+                        <p class="text-sm text-gray-500">${formatDate(thought.created_at)}${lifeDayText}</p>
                     </div>
                     ${!isOwnThought ? `
                         <button
@@ -1065,6 +1118,94 @@
             document.getElementById('link-input').value = '';
             attachedLink = '';
         });
+
+        // ========== 快速发布话题标签功能 ==========
+        const quickSelectedTagsContainer = document.getElementById('quick-selected-tags');
+        const quickTagsInput = document.getElementById('quick-tags-input');
+        let quickSelectedTags = []; // 存储已选择的标签
+
+        // 添加标签
+        function addQuickTag(tagName) {
+            // 移除 # 号（如果有）
+            tagName = tagName.replace(/^#/, '').trim();
+
+            if (!tagName) return;
+
+            // 检查是否已存在
+            if (quickSelectedTags.includes(tagName)) {
+                showToast('该话题已添加', 'warning');
+                return;
+            }
+
+            // 限制最多6个标签
+            if (quickSelectedTags.length >= 6) {
+                showToast('最多只能添加6个话题', 'warning');
+                return;
+            }
+
+            // 添加到数组
+            quickSelectedTags.push(tagName);
+
+            // 更新UI
+            renderQuickTags();
+
+            // 清空输入框
+            quickTagsInput.value = '';
+        }
+
+        // 移除标签（暴露到全局作用域）
+        window.removeQuickTag = function(tagName) {
+            quickSelectedTags = quickSelectedTags.filter(tag => tag !== tagName);
+            renderQuickTags();
+        };
+
+        // 渲染标签UI
+        function renderQuickTags() {
+            if (quickSelectedTags.length === 0) {
+                quickSelectedTagsContainer.innerHTML = '<span class="text-sm text-gray-400">暂无话题</span>';
+                return;
+            }
+
+            quickSelectedTagsContainer.innerHTML = quickSelectedTags.map(tag => `
+                <span class="inline-flex items-center bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs">
+                    #${tag}
+                    <button type="button" class="ml-1 text-blue-500 hover:text-blue-700" onclick="removeQuickTag('${tag}')">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </span>
+            `).join('');
+        }
+
+        // 监听输入框回车事件
+        quickTagsInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const tagName = this.value.trim();
+                if (tagName) {
+                    addQuickTag(tagName);
+                }
+            }
+        });
+
+        // 热门话题按钮点击事件
+        document.querySelectorAll('.quick-hot-tag-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tagName = this.dataset.tag;
+                addQuickTag(tagName);
+            });
+        });
+
+        // 话题按钮点击
+        document.getElementById('quick-tags-btn').addEventListener('click', function() {
+            const tagsContainer = document.getElementById('quick-tags-container');
+            tagsContainer.classList.toggle('hidden');
+            if (!tagsContainer.classList.contains('hidden')) {
+                quickTagsInput.focus();
+            }
+        });
+
+        // 初始化标签显示
+        renderQuickTags();
 
         // 链接输入框变化
         document.getElementById('link-input').addEventListener('input', function(e) {
@@ -1464,7 +1605,7 @@
                         content: content,
                         images: [...uploadedImages], // 包含上传的图片
                         visibility: 'public',
-                        tags: [],
+                        tags: quickSelectedTags, // 包含选择的话题标签
                         location: attachedLink || null // 将链接存储在 location 字段
                     };
 
@@ -1486,6 +1627,10 @@
                         uploadedVideo = null;
                         attachedLink = '';
 
+                        // 清空话题标签
+                        quickSelectedTags = [];
+                        renderQuickTags();
+
                         // 清空预览区域
                         document.getElementById('image-preview-container').classList.add('hidden');
                         document.getElementById('image-preview-container').innerHTML = '';
@@ -1493,6 +1638,7 @@
                         document.getElementById('video-preview-container').innerHTML = '';
                         document.getElementById('link-preview-container').classList.add('hidden');
                         document.getElementById('link-input').value = '';
+                        document.getElementById('quick-tags-container').classList.add('hidden');
 
                         // 重新加载思想元胞列表
                         currentPage = 1;
@@ -2077,41 +2223,7 @@
             }
 
             if (currentUser) {
-                // 生成用户头像URL（使用用户ID作为seed）
-                const avatarUrl = `https://picsum.photos/seed/${currentUser.user_id}/200/200`;
-
-                // 更新顶部导航栏的用户头像
-                const headerAvatar = document.getElementById('header-user-avatar');
-                if (headerAvatar) {
-                    headerAvatar.src = avatarUrl;
-                    headerAvatar.alt = currentUser.username;
-                }
-
-                // 更新右侧边栏的用户信息
-                const sidebarAvatar = document.getElementById('sidebar-user-avatar');
-                if (sidebarAvatar) {
-                    sidebarAvatar.src = avatarUrl;
-                    sidebarAvatar.alt = currentUser.username;
-                }
-
-                const sidebarName = document.getElementById('sidebar-user-name');
-                if (sidebarName) {
-                    sidebarName.textContent = currentUser.username;
-                }
-
-                const sidebarBio = document.getElementById('sidebar-user-bio');
-                if (sidebarBio) {
-                    sidebarBio.textContent = currentUser.email || '数字生命探索者';
-                }
-
-                // 更新发帖输入框的用户头像
-                const postInputAvatar = document.getElementById('post-input-user-avatar');
-                if (postInputAvatar) {
-                    postInputAvatar.src = avatarUrl;
-                    postInputAvatar.alt = currentUser.username;
-                }
-
-                // 从后端 API 获取用户资料 (包括统计数据)
+                // 从后端 API 获取用户资料 (包括头像、统计数据等)
                 try {
                     const response = await fetch(`${API_BASE_URL}/api/square/users/${currentUser.user_id}`, {
                         headers: {
@@ -2120,8 +2232,15 @@
                     });
                     const result = await response.json();
 
+                    let avatarUrl = `https://picsum.photos/seed/${currentUser.user_id}/200/200`; // 默认头像
+
                     if (result.code === 200 && result.data && result.data.profile) {
                         const profile = result.data.profile;
+
+                        // 使用后端返回的真实头像（字段名是 avatar_url）
+                        if (profile.avatar_url) {
+                            avatarUrl = profile.avatar_url;
+                        }
 
                         // 更新统计数据
                         const followingCount = document.getElementById('sidebar-following-count');
@@ -2134,17 +2253,66 @@
                             followersCount.textContent = profile.followers_count || 0;
                         }
 
-                        // 如果有 bio,更新 bio
-                        if (profile.bio) {
-                            const sidebarBio = document.getElementById('sidebar-user-bio');
-                            if (sidebarBio) {
-                                sidebarBio.textContent = profile.bio;
-                            }
+                        // 更新个人简介：优先显示 bio，没有则显示邮箱
+                        const sidebarBio = document.getElementById('sidebar-user-bio');
+                        if (sidebarBio) {
+                            sidebarBio.textContent = profile.bio || currentUser.email || '数字生命探索者';
                         }
                     }
+
+                    // 更新所有头像元素
+                    // 更新顶部导航栏的用户头像
+                    const headerAvatar = document.getElementById('header-user-avatar');
+                    if (headerAvatar) {
+                        headerAvatar.src = avatarUrl;
+                        headerAvatar.alt = currentUser.username;
+                    }
+
+                    // 更新右侧边栏的用户信息
+                    const sidebarAvatar = document.getElementById('sidebar-user-avatar');
+                    if (sidebarAvatar) {
+                        sidebarAvatar.src = avatarUrl;
+                        sidebarAvatar.alt = currentUser.username;
+                    }
+
+                    // 更新发帖输入框的用户头像
+                    const postInputAvatar = document.getElementById('post-input-user-avatar');
+                    if (postInputAvatar) {
+                        postInputAvatar.src = avatarUrl;
+                        postInputAvatar.alt = currentUser.username;
+                    }
+
                 } catch (error) {
                     console.warn('从 API 获取用户资料失败:', error);
+                    // 如果API调用失败，使用默认头像
+                    const avatarUrl = `https://picsum.photos/seed/${currentUser.user_id}/200/200`;
+
+                    const headerAvatar = document.getElementById('header-user-avatar');
+                    if (headerAvatar) {
+                        headerAvatar.src = avatarUrl;
+                        headerAvatar.alt = currentUser.username;
+                    }
+
+                    const sidebarAvatar = document.getElementById('sidebar-user-avatar');
+                    if (sidebarAvatar) {
+                        sidebarAvatar.src = avatarUrl;
+                        sidebarAvatar.alt = currentUser.username;
+                    }
+
+                    const postInputAvatar = document.getElementById('post-input-user-avatar');
+                    if (postInputAvatar) {
+                        postInputAvatar.src = avatarUrl;
+                        postInputAvatar.alt = currentUser.username;
+                    }
                 }
+
+                // 更新用户名和基本信息
+                const sidebarName = document.getElementById('sidebar-user-name');
+                if (sidebarName) {
+                    sidebarName.textContent = currentUser.username;
+                }
+
+                // 注意：bio 已经在上面的 API 调用中更新了，这里不需要重复设置
             }
         }
 

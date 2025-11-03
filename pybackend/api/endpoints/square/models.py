@@ -35,6 +35,7 @@ class ThoughtCellResponse(BaseModel):
     user_id: str
     username: str  # 从 users 表 JOIN 获取
     avatar_url: Optional[str] = None  # 从 user_profiles 表 JOIN 获取
+    user_birth: Optional[str] = None  # 从 users 表 JOIN 获取用户出生日期
     content: str
     images: List[str] = []
     visibility: str

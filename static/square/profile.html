@@ -70,10 +70,10 @@
         <div class="container mx-auto px-4">
             <div class="pt-16 pb-20">
                 <div class="flex flex-col md:flex-row">
-                    <img id="profileAvatar" src="https://picsum.photos/seed/user456/400/400" alt="用户头像" class="w-36 h-36 rounded-full border-4 border-white mx-auto md:mx-0">
+                    <img id="profileAvatar" src="" alt="用户头像" class="w-36 h-36 rounded-full border-4 border-white mx-auto md:mx-0">
                     <div class="mt-6 md:mt-0 md:ml-8">
-                        <h1 id="userName" class="text-3xl md:text-4xl font-bold">访客用户</h1>
-                        <p id="userBio" class="text-xl mt-2 opacity-90">暂无个人简介</p>
+                        <h1 id="userName" class="text-3xl md:text-4xl font-bold"></h1>
+                        <p id="userBio" class="text-xl mt-2 opacity-90"></p>
                         <div class="flex flex-wrap gap-4 mt-4">
                             <button id="shareBtn" class="bg-white text-primary hover:bg-gray-100 py-2 px-6 rounded-full transition-colors flex items-center">
                                 <i class="fa fa-share mr-2"></i>分享主页
@@ -93,7 +93,7 @@
                     <p class="text-xl font-medium text-gray-800">
                         生命的第 <span id="lifeDayCount" class="text-primary font-bold text-2xl">0</span> 天
                     </p>
-                    <p class="text-gray-500 mt-1">出生于 <span id="birthDate">1990-01-01</span></p>
+                    <p class="text-gray-500 mt-1">出生于 <span id="birthDate"></span></p>
                 </div>
                 <div class="flex space-x-6 mt-4 md:mt-0">
                     <div class="text-center">
@@ -127,28 +127,28 @@
                                 <i class="fa fa-user text-primary mt-1"></i>
                                 <div>
                                     <p class="text-sm text-gray-500">昵称</p>
-                                    <p id="infoName" class="text-gray-900">访客用户</p>
+                                    <p id="infoName" class="text-gray-900"></p>
                                 </div>
                             </div>
                             <div class="flex items-start space-x-3">
                                 <i class="fa fa-map-marker text-primary mt-1"></i>
                                 <div>
                                     <p class="text-sm text-gray-500">所在地</p>
-                                    <p id="infoLocation" class="text-gray-900">北京市</p>
+                                    <p id="infoLocation" class="text-gray-900"></p>
                                 </div>
                             </div>
                             <div class="flex items-start space-x-3">
                                 <i class="fa fa-briefcase text-primary mt-1"></i>
                                 <div>
                                     <p class="text-sm text-gray-500">职业</p>
-                                    <p id="infoOccupation" class="text-gray-900">数字生命探索者</p>
+                                    <p id="infoOccupation" class="text-gray-900"></p>
                                 </div>
                             </div>
                             <div class="flex items-start space-x-3">
                                 <i class="fa fa-calendar text-primary mt-1"></i>
                                 <div>
                                     <p class="text-sm text-gray-500">出生日期</p>
-                                    <p id="infoBirthdate" class="text-gray-900">1990-01-01</p>
+                                    <p id="infoBirthdate" class="text-gray-900"></p>
                                 </div>
                             </div>
                         </div>
@@ -160,9 +160,7 @@
                     <div class="p-6">
                         <h3 class="text-lg font-bold text-gray-800 mb-4">兴趣标签</h3>
                         <div id="interestTags" class="flex flex-wrap gap-2">
-                            <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">#数字永生</span>
-                            <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">#人工智能</span>
-                            <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">#哲学思考</span>
+                            <!-- 标签将通过JavaScript动态加载 -->
                         </div>
                     </div>
                 </div>
@@ -213,6 +211,9 @@
     </div>
 
     <script>
+        // API 基础 URL
+        const API_BASE_URL = 'http://localhost:8000';
+
         // 全局变量
         let targetUser = {};
         let userThoughtCells = [];
@@ -228,64 +229,64 @@
         // 加载目标用户数据
         async function loadTargetUserData() {
             try {
-                // 模拟目标用户数据（实际应该从URL参数或API获取）
-                targetUser = getMockUserData();
+                // 从URL参数获取用户ID
+                const urlParams = new URLSearchParams(window.location.search);
+                const userId = urlParams.get('user_id');
+
+                if (!userId) {
+                    console.error('未提供用户ID');
+                    return;
+                }
+
+                // 从API获取用户数据
+                const response = await fetch(`${API_BASE_URL}/api/users/${userId}`);
+                if (!response.ok) {
+                    throw new Error('获取用户数据失败');
+                }
+
+                targetUser = await response.json();
                 updateUserProfile();
                 loadUserStats();
             } catch (error) {
                 console.error('加载用户数据失败:', error);
-                targetUser = getMockUserData();
-                updateUserProfile();
+                alert('加载用户数据失败，请稍后重试');
             }
-        }
-
-        // 获取模拟用户数据
-        function getMockUserData() {
-            return {
-                user_id: 'target_user',
-                username: '数字生命探索者',
-                avatar: 'https://picsum.photos/seed/user456/400/400',
-                bio: '致力于思想的永恒保存和数字生命的探索',
-                location: '北京市',
-                occupation: '数字生命探索者',
-                birthdate: '1990-01-01',
-                interests: '哲学, 科技, 人工智能',
-                tags: ['数字永生', '人工智能', '哲学思考', '意识研究'],
-                stats: {
-                    thoughtCount: 12,
-                    followingCount: 25,
-                    followerCount: 156
-                }
-            };
         }
 
         // 更新用户资料显示
         function updateUserProfile() {
-            document.getElementById('userName').textContent = targetUser.username;
-            document.getElementById('userBio').textContent = targetUser.bio;
-            document.getElementById('profileAvatar').src = targetUser.avatar;
-            
+            document.getElementById('userName').textContent = targetUser.username || '未知用户';
+            // 优先显示个人简介，如果没有则显示邮箱，都没有则显示默认文本
+            document.getElementById('userBio').textContent = targetUser.bio || targetUser.email || '暂无个人简介';
+            document.getElementById('profileAvatar').src = targetUser.avatar || 'https://via.placeholder.com/400';
+
             // 更新个人信息卡片
-            document.getElementById('infoName').textContent = targetUser.username;
-            document.getElementById('infoLocation').textContent = targetUser.location;
-            document.getElementById('infoOccupation').textContent = targetUser.occupation;
-            document.getElementById('infoBirthdate').textContent = targetUser.birthdate;
-            
+            document.getElementById('infoName').textContent = targetUser.username || '未知';
+            document.getElementById('infoLocation').textContent = targetUser.location || '未知';
+            document.getElementById('infoOccupation').textContent = targetUser.occupation || '未知';
+            document.getElementById('infoBirthdate').textContent = targetUser.birthdate || '未知';
+
             // 更新生命天数
             if (targetUser.birthdate) {
                 updateLifeDayCount(targetUser.birthdate);
                 document.getElementById('birthDate').textContent = targetUser.birthdate;
             }
-            
+
             // 更新标签云
-            updateTagCloud(targetUser.tags);
+            if (targetUser.tags && targetUser.tags.length > 0) {
+                updateTagCloud(targetUser.tags);
+            }
         }
 
         // 更新标签云
         function updateTagCloud(tags) {
             const container = document.getElementById('interestTags');
             container.innerHTML = '';
-            
+
+            if (!tags || tags.length === 0) {
+                return;
+            }
+
             tags.forEach(tag => {
                 const tagElement = document.createElement('span');
                 tagElement.className = 'bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm';
@@ -313,60 +314,29 @@
         }
 
         // 加载用户的思想元胞
-        function loadUserThoughtCells() {
+        async function loadUserThoughtCells() {
             try {
-                // 模拟目标用户的思想元胞数据
-                userThoughtCells = getMockThoughtCells();
+                const urlParams = new URLSearchParams(window.location.search);
+                const userId = urlParams.get('user_id');
+
+                if (!userId) {
+                    console.error('未提供用户ID');
+                    renderThoughtCells([]);
+                    return;
+                }
+
+                // 从API获取用户的思想元胞
+                const response = await fetch(`${API_BASE_URL}/api/thought-cells/user/${userId}`);
+                if (!response.ok) {
+                    throw new Error('获取思想元胞失败');
+                }
+
+                userThoughtCells = await response.json();
                 renderThoughtCells(userThoughtCells);
             } catch (error) {
                 console.error('加载思想元胞失败:', error);
                 renderThoughtCells([]);
             }
-        }
-
-        // 获取模拟思想元胞数据
-        function getMockThoughtCells() {
-            return [
-                {
-                    id: 'mock_thought_1',
-                    userId: targetUser.user_id,
-                    username: targetUser.username,
-                    avatar: targetUser.avatar,
-                    content: '今天思考了数字生命的意义。我们的思想和记忆，是否可以通过数字化的方式得到永恒？\n\n也许真正的永恒不在于肉体的延续，而在于思想的传承。',
-                    quote: '"我思故我在" - 笛卡尔',
-                    tags: ['数字生命', '哲学思考', '永恒'],
-                    images: ['https://picsum.photos/seed/digital_life/800/400'],
-                    imprinted: false,
-                    imprintCount: 5,
-                    createdAt: new Date(Date.now() - 86400000).toISOString()
-                },
-                {
-                    id: 'mock_thought_2',
-                    userId: targetUser.user_id,
-                    username: targetUser.username,
-                    avatar: targetUser.avatar,
-                    content: '人工智能的发展让我们重新思考什么是意识。\n\n当AI能够模拟人类的思维过程时，我们是否还需要坚持意识必须基于生物基础？',
-                    quote: '',
-                    tags: ['人工智能', '意识研究'],
-                    images: [],
-                    imprinted: true,
-                    imprintCount: 12,
-                    createdAt: new Date(Date.now() - 172800000).toISOString()
-                },
-                {
-                    id: 'mock_thought_3',
-                    userId: targetUser.user_id,
-                    username: targetUser.username,
-                    avatar: targetUser.avatar,
-                    content: '数字永生不仅仅是数据的保存，更是意识的延续。\n\n我们需要重新定义什么是"活着"。',
-                    quote: '"死亡并不是失去生命，而是走出了时间" - 余华',
-                    tags: ['数字永生', '生命意义'],
-                    images: ['https://picsum.photos/seed/consciousness/800/400'],
-                    imprinted: false,
-                    imprintCount: 8,
-                    createdAt: new Date(Date.now() - 259200000).toISOString()
-                }
-            ];
         }
 
         // 渲染思想元胞

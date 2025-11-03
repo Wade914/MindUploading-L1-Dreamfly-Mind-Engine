@@ -32,8 +32,8 @@ function getCurrentUser() {
     }
 }
 
-// 页面导航函数（用于HTML页面之间的跳转）
-function navigateTo(page) {
+// 页面导航函数（用于HTML页面之间的跳转 - 保留历史记录）
+function navigateTo(page, params = {}) {
     const routes = {
         'square': '/pages/square/index',
         'homepage': '/pages/square/homepage/index',
@@ -41,11 +41,20 @@ function navigateTo(page) {
         'mindos': '/pages/square/mindos/index',
         'wittgenstein': '/pages/square/wittgenstein/index',
         'following': '/pages/square/following/index',
-        'messages': '/pages/square/messages/index'
+        'messages': '/pages/square/messages/index',
+        'consciousness': '/pages/consciousness/index'
     };
 
-    const route = routes[page];
+    let route = routes[page];
     if (route) {
+        // 添加查询参数
+        if (Object.keys(params).length > 0) {
+            const queryString = Object.entries(params)
+                .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+                .join('&');
+            route = `${route}?${queryString}`;
+        }
+
         // 检测是否在uni-app的web-view中
         if (typeof uni !== 'undefined' && typeof uni.postMessage === 'function') {
             // 在uni-app的web-view中，使用postMessage通知外层应用跳转
@@ -69,6 +78,50 @@ function navigateTo(page) {
         } else {
             // 在普通浏览器中，直接使用hash路由跳转
             window.location.hash = route;
+        }
+    } else {
+        console.error(`未知的页面: ${page}`);
+    }
+}
+
+// 页面重定向函数（替换当前页面，会更新URL）
+function redirectTo(page) {
+    const routes = {
+        'square': '/pages/square/index',
+        'homepage': '/pages/square/homepage/index',
+        'profile': '/pages/square/profile/index',
+        'mindos': '/pages/square/mindos/index',
+        'wittgenstein': '/pages/square/wittgenstein/index',
+        'following': '/pages/square/following/index',
+        'messages': '/pages/square/messages/index',
+        'consciousness': '/pages/consciousness/index'
+    };
+
+    const route = routes[page];
+    if (route) {
+        // 检测是否在uni-app的web-view中
+        if (typeof uni !== 'undefined' && typeof uni.postMessage === 'function') {
+            // 在uni-app的web-view中，使用postMessage通知外层应用重定向
+            uni.postMessage({
+                data: {
+                    action: 'redirectTo',
+                    url: route
+                }
+            });
+        } else if (window.parent !== window) {
+            // 在iframe中，尝试修改父窗口的hash
+            try {
+                window.parent.location.replace(window.parent.location.origin + '/#' + route);
+            } catch (e) {
+                // 跨域限制，使用postMessage
+                window.parent.postMessage({
+                    type: 'redirectTo',
+                    url: route
+                }, '*');
+            }
+        } else {
+            // 在普通浏览器中，使用replace替换当前历史记录
+            window.location.replace(window.location.origin + '/#' + route);
         }
     } else {
         console.error(`未知的页面: ${page}`);

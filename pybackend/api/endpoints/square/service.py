@@ -86,10 +86,16 @@ class SquareService:
             tc.likes_count, tc.comments_count, tc.shares_count, tc.tags, tc.location,
             tc.created_at, tc.updated_at,
             u.username,
+            COALESCE(u.birth, m.birth) as user_birth,
             up.avatar_url
         FROM thought_cells tc
         LEFT JOIN users u ON tc.user_id = u.id
         LEFT JOIN user_profiles up ON tc.user_id = up.user_id
+        LEFT JOIN (
+            SELECT user_id, birth, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) as rn
+            FROM minds
+            WHERE birth IS NOT NULL AND birth != ''
+        ) m ON tc.user_id = m.user_id AND m.rn = 1
         {where_clause}
         ORDER BY tc.created_at DESC
         LIMIT :limit OFFSET :offset
@@ -123,6 +129,7 @@ class SquareService:
                 user_id=row.user_id,
                 username=row.username or "未知用户",
                 avatar_url=row.avatar_url,
+                user_birth=row.user_birth,
                 content=row.content,
                 images=json.loads(row.images) if row.images else [],
                 visibility=row.visibility,
@@ -163,11 +170,17 @@ class SquareService:
             tc.likes_count, tc.comments_count, tc.shares_count, tc.tags, tc.location,
             tc.created_at, tc.updated_at,
             u.username,
+            COALESCE(u.birth, m.birth) as user_birth,
             up.avatar_url
         FROM thought_cells tc
         INNER JOIN user_follows uf ON tc.user_id = uf.following_id
         LEFT JOIN users u ON tc.user_id = u.id
         LEFT JOIN user_profiles up ON tc.user_id = up.user_id
+        LEFT JOIN (
+            SELECT user_id, birth, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) as rn
+            FROM minds
+            WHERE birth IS NOT NULL AND birth != ''
+        ) m ON tc.user_id = m.user_id AND m.rn = 1
         WHERE uf.follower_id = :current_user_id
         ORDER BY tc.created_at DESC
         LIMIT :limit OFFSET :offset
@@ -211,6 +224,7 @@ class SquareService:
                 user_id=row.user_id,
                 username=row.username or "未知用户",
                 avatar_url=row.avatar_url,
+                user_birth=row.user_birth,
                 content=row.content,
                 images=json.loads(row.images) if row.images else [],
                 visibility=row.visibility,
@@ -238,15 +252,21 @@ class SquareService:
     async def get_thought_by_id(db: AsyncSession, thought_id: int, current_user_id: Optional[str] = None) -> Optional[ThoughtCellResponse]:
         """获取单个思想元胞详情"""
         query_sql = """
-        SELECT 
+        SELECT
             tc.id, tc.user_id, tc.content, tc.images, tc.visibility,
             tc.likes_count, tc.comments_count, tc.shares_count, tc.tags, tc.location,
             tc.created_at, tc.updated_at,
             u.username,
+            COALESCE(u.birth, m.birth) as user_birth,
             up.avatar_url
         FROM thought_cells tc
         LEFT JOIN users u ON tc.user_id = u.id
         LEFT JOIN user_profiles up ON tc.user_id = up.user_id
+        LEFT JOIN (
+            SELECT user_id, birth, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) as rn
+            FROM minds
+            WHERE birth IS NOT NULL AND birth != ''
+        ) m ON tc.user_id = m.user_id AND m.rn = 1
         WHERE tc.id = :thought_id
         """
         
@@ -268,6 +288,7 @@ class SquareService:
             user_id=row.user_id,
             username=row.username or "未知用户",
             avatar_url=row.avatar_url,
+            user_birth=row.user_birth,
             content=row.content,
             images=json.loads(row.images) if row.images else [],
             visibility=row.visibility,
@@ -811,6 +832,7 @@ class SquareService:
             COALESCE(u.username, tc.user_id) as username,
             up.avatar_url,
             up.bio,
+            COALESCE(u.birth, m.birth) as user_birth,
             COALESCE(
                 (SELECT 1 FROM thought_likes
                  WHERE thought_id = tc.id AND user_id = :current_user_id LIMIT 1),
@@ -825,6 +847,11 @@ class SquareService:
         JOIN thought_cells tc ON tb.thought_id = tc.id
         LEFT JOIN user_profiles up ON tc.user_id = up.user_id
         LEFT JOIN users u ON tc.user_id = u.id
+        LEFT JOIN (
+            SELECT user_id, birth, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) as rn
+            FROM minds
+            WHERE birth IS NOT NULL AND birth != ''
+        ) m ON tc.user_id = m.user_id AND m.rn = 1
         WHERE tb.user_id = :user_id
         ORDER BY tb.created_at DESC
         LIMIT :limit OFFSET :offset
@@ -877,8 +904,9 @@ class SquareService:
                 updated_at=row[11],
                 avatar_url=row[14],
                 bio=row[15],
-                is_liked=bool(row[16]),
-                is_bookmarked=bool(row[17])
+                user_birth=row[16],  # user_birth (新增)
+                is_liked=bool(row[17]),
+                is_bookmarked=bool(row[18])
             )
 
             bookmark = BookmarkThoughtCellResponse(

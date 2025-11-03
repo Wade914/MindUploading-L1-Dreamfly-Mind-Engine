@@ -593,6 +593,20 @@
             const isFollowing = thought.is_following || false;
             const isBookmarked = thought.is_bookmarked || false;
 
+            // 计算生命天数
+            let lifeDayText = '';
+            if (thought.user_birth && thought.created_at) {
+                try {
+                    const birthDate = new Date(thought.user_birth);
+                    const postDate = new Date(thought.created_at);
+                    const diffTime = Math.abs(postDate - birthDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    lifeDayText = ` · 生命第${diffDays}天`;
+                } catch (error) {
+                    console.error('计算生命天数失败:', error);
+                }
+            }
+
             // 获取当前用户ID
             const token = localStorage.getItem('auth_token');
             let currentUserId = null;
@@ -608,15 +622,15 @@
             // 判断是否显示收藏时间（在收藏列表中）
             const displayTime = thought.bookmarked_at
                 ? `<i class="fa fa-bookmark text-primary mr-1"></i>${formatDate(thought.bookmarked_at)}收藏`
-                : formatDate(thought.created_at);
+                : `${formatDate(thought.created_at)}${lifeDayText}`;
 
             article.innerHTML = `
                 <!-- 头部信息 -->
                 <div class="flex items-start space-x-4 mb-4">
-                    <img src="${avatarUrl}" alt="${username}" class="w-10 h-10 rounded-full object-cover flex-shrink-0 cursor-pointer" onclick="navigateTo('homepage')">
+                    <img src="${avatarUrl}" alt="${username}" class="w-10 h-10 rounded-full object-cover flex-shrink-0 cursor-pointer" onclick="navigateTo('homepage', { user_id: '${thought.user_id}' })">
                     <div class="flex-1">
                         <div class="flex items-center space-x-2">
-                            <h3 class="font-bold text-gray-900 cursor-pointer hover:text-primary" onclick="navigateTo('homepage')">${escapeHtml(username)}</h3>
+                            <h3 class="font-bold text-gray-900 cursor-pointer hover:text-primary" onclick="navigateTo('homepage', { user_id: '${thought.user_id}' })">${escapeHtml(username)}</h3>
                             <span class="text-primary text-sm">思想元胞</span>
                         </div>
                         <p class="text-sm text-gray-500">${displayTime}</p>
