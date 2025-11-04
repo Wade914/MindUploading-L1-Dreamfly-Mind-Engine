@@ -13,8 +13,8 @@
 
     <!-- 内容遮罩 -->
     <view class="content-overlay">
-      <scroll-view 
-        class="scroll-container" 
+      <scroll-view
+        class="scroll-container"
         scroll-y="true"
         :scroll-with-animation="true"
       >
@@ -74,29 +74,31 @@
           <view class="data-input-section">
             <view class="input-group">
               <text class="input-label">身高 (cm)</text>
-              <input 
-                type="number" 
+              <input
+                type="text"
+                inputmode="decimal"
                 class="input-field"
                 v-model="height"
                 placeholder="请输入身高"
-                maxlength="3"
+                @input="handleHeightInput"
               />
             </view>
 
             <view class="input-group">
               <text class="input-label">体重 (kg)</text>
-              <input 
-                type="number" 
+              <input
+                type="text"
+                inputmode="decimal"
                 class="input-field"
                 v-model="weight"
                 placeholder="请输入体重"
-                maxlength="3"
+                @input="handleWeightInput"
               />
             </view>
           </view>
 
           <!-- 上传按钮 -->
-          <button 
+          <button
             class="submit-btn"
             :disabled="!isFormValid"
             @click="uploadData"
@@ -128,6 +130,32 @@ export default {
   },
 
   methods: {
+    handleHeightInput(e) {
+      const value = String(e.detail?.value || e.target?.value || '')
+      // 只允许数字和小数点
+      const numericValue = value.replace(/[^\d.]/g, '')
+      // 确保只有一个小数点
+      const parts = numericValue.split('.')
+      if (parts.length > 2) {
+        this.height = parts[0] + '.' + parts.slice(1).join('')
+      } else {
+        this.height = numericValue
+      }
+    },
+
+    handleWeightInput(e) {
+      const value = String(e.detail?.value || e.target?.value || '')
+      // 只允许数字和小数点
+      const numericValue = value.replace(/[^\d.]/g, '')
+      // 确保只有一个小数点
+      const parts = numericValue.split('.')
+      if (parts.length > 2) {
+        this.weight = parts[0] + '.' + parts.slice(1).join('')
+      } else {
+        this.weight = numericValue
+      }
+    },
+
     async openCamera() {
       try {
         // 请求摄像头权限
@@ -160,11 +188,17 @@ export default {
         
         // 处理图片
         this.handleImageSelect(imageData)
-        
+
         uni.showToast({
           title: '拍照成功',
-          icon: 'success'
+          icon: 'success',
+          duration: 1500,
+          mask: false
         })
+        // 兜底：强制在 1.6s 后关闭，避免偶发卡住
+        setTimeout(() => {
+          try { uni.hideToast() } catch (e) {}
+        }, 1600)
       } catch (err) {
         uni.showToast({
           title: '无法访问摄像头',
@@ -198,10 +232,19 @@ export default {
     },
 
     async uploadData() {
+      console.log('uploadData 被调用')
+      console.log('表单验证状态:', this.isFormValid)
+      console.log('当前数据:', {
+        imageUrl: this.imageUrl,
+        height: this.height,
+        weight: this.weight
+      })
+
       if (!this.isFormValid) {
         uni.showToast({
           title: '请完成所有必填项',
-          icon: 'none'
+          icon: 'none',
+          duration: 2000
         })
         return
       }
@@ -224,19 +267,20 @@ export default {
         getApp().globalData.uploadData.imageFile = this.imageFile
         getApp().globalData.uploadData.height = this.height
         getApp().globalData.uploadData.weight = this.weight
-        
+
         console.log('保存的数据:', {
           imageUrl: this.imageUrl,
           height: this.height,
           weight: this.weight
         })
-        
+
         uni.hideLoading()
         uni.showToast({
           title: '上传成功',
-          icon: 'success'
+          icon: 'success',
+          duration: 1500
         })
-        
+
         // 跳转到生成页面
         setTimeout(() => {
           uni.navigateTo({
@@ -247,7 +291,8 @@ export default {
         uni.hideLoading()
         uni.showToast({
           title: '上传失败',
-          icon: 'none'
+          icon: 'none',
+          duration: 2000
         })
         console.error('上传错误:', err)
       }
@@ -288,10 +333,12 @@ $bg-gray: rgba(255, 255, 255, 0.08);
     z-index: 2;
     height: 100vh;
     background: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4));
+    pointer-events: auto;
 
     .scroll-container {
       height: 100%;
       padding: 40px;
+      pointer-events: auto;
     }
 
     .image-content {
@@ -302,6 +349,7 @@ $bg-gray: rgba(255, 255, 255, 0.08);
       display: flex;
       flex-direction: column;
       gap: 40px;
+      pointer-events: auto;
 
       .header {
         text-align: center;
@@ -328,6 +376,8 @@ $bg-gray: rgba(255, 255, 255, 0.08);
         background: rgba(171, 130, 255, 0.05);
         border-radius: 16px;
         backdrop-filter: blur(10px);
+        position: relative;
+        z-index: 1;
 
         .guide-item {
           .guide-title {
@@ -352,6 +402,8 @@ $bg-gray: rgba(255, 255, 255, 0.08);
         flex-direction: column;
         align-items: center;
         gap: 20px;
+        position: relative;
+        z-index: 1;
 
         .preview-container {
           width: 100%;
@@ -366,6 +418,8 @@ $bg-gray: rgba(255, 255, 255, 0.08);
           cursor: pointer;
           overflow: hidden;
           transition: all 0.3s ease;
+          position: relative;
+          z-index: 2;
 
           &:hover {
             border-color: $text-white;
@@ -445,37 +499,91 @@ $bg-gray: rgba(255, 255, 255, 0.08);
         flex-direction: column;
         gap: 20px;
         padding: 30px;
-        background: rgba(171, 130, 255, 0.05);
+        background: rgba(171, 130, 255, 0.15);
         border-radius: 16px;
-        backdrop-filter: blur(10px);
+        position: relative;
+        z-index: 10;
+        pointer-events: auto !important;
 
         .input-group {
           display: flex;
           flex-direction: column;
           gap: 8px;
+          pointer-events: auto !important;
 
           .input-label {
             font-size: 16px;
             color: $primary-purple;
             font-weight: 500;
+            user-select: none;
           }
 
           .input-field {
-            padding: 12px 16px;
+            width: 100%;
+            height: 48px;
+            padding: 0 16px;
             background: rgba(255, 255, 255, 0.05);
-            border: 1px solid $primary-purple;
+            border: 2px solid rgba(171, 130, 255, 0.3);
             border-radius: 8px;
             color: $text-white;
             font-size: 16px;
+            line-height: 44px;
+            text-align: left;
             transition: all 0.3s ease;
 
             &:focus {
               background: rgba(255, 255, 255, 0.1);
-              border-color: $text-white;
+              border-color: $primary-purple;
+              outline: none;
+              box-shadow: 0 0 20px rgba(171, 130, 255, 0.3);
             }
 
             &::placeholder {
-              color: $text-gray;
+              color: rgba(255, 255, 255, 0.3);
+              line-height: 44px;
+            }
+          }
+
+          // 针对 uni-app 编译后的 uni-input 元素
+          uni-input {
+            display: block;
+            width: 100%;
+            height: 48px;
+
+            // uni-app 生成的包裹层
+            .uni-input-wrapper {
+              position: relative;
+              display: flex;
+              align-items: center;
+              height: 100%;
+            }
+
+            // uni-app 生成的 placeholder 层
+            .uni-input-placeholder {
+              pointer-events: none;
+              position: absolute;
+              left: 16px;
+              top: 0;
+              height: 100%;
+              display: flex;
+              align-items: center;
+              color: rgba(255, 255, 255, 0.3);
+              font-size: 16px;
+            }
+
+            // 内部真实的 input 元素
+            input,
+            .uni-input-input {
+              width: 100%;
+              height: 100%;
+              background: transparent;
+              border: none;
+              outline: none;
+              color: $text-white;
+              font-size: 16px;
+              line-height: 44px;
+              text-align: left;
+              padding: 0;
             }
           }
         }
@@ -489,22 +597,47 @@ $bg-gray: rgba(255, 255, 255, 0.08);
         cursor: pointer;
         transition: all 0.3s ease;
         margin-top: 20px;
+        position: relative;
+        z-index: 50;
+        pointer-events: auto !important;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
 
-        &:hover {
+        &:hover:not(:disabled) {
           box-shadow: 0 5px 25px rgba(171, 130, 255, 0.4);
           transform: translateY(-2px);
         }
 
-        &:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-          transform: none;
+        &:active:not(:disabled) {
+          transform: translateY(0);
+        }
+
+        &:disabled,
+        &[disabled] {
+          opacity: 0.4 !important;
+          cursor: not-allowed !important;
+          transform: none !important;
+          background: rgba(171, 130, 255, 0.3) !important;
+          pointer-events: none !important;
+          box-shadow: none !important;
+        }
+
+        // uni-app H5 平台的 disabled 属性支持
+        &[aria-disabled="true"] {
+          opacity: 0.4 !important;
+          cursor: not-allowed !important;
+          transform: none !important;
+          background: rgba(171, 130, 255, 0.3) !important;
+          pointer-events: none !important;
+          box-shadow: none !important;
         }
 
         .btn-text {
           font-size: 18px;
           color: $text-white;
           font-weight: 500;
+          pointer-events: none;
+          user-select: none;
         }
       }
     }

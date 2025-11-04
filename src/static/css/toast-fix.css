@@ -1,0 +1,61 @@
+/**
+ * uni-app Toast 居中修复（安全版 v2）
+ * 只修改内部内容的对齐方式，绝不影响容器的 display 属性
+ * 确保 Toast 可以正常显示和隐藏
+ */
+
+/* ========== 内容区域居中（不修改最外层容器） ========== */
+uni-toast .uni-toast__content,
+.uni-toast .uni-toast__content,
+.uni-toast__content {
+  text-align: center;
+}
+
+/* ========== 图标居中 ========== */
+uni-toast .uni-icon-success,
+.uni-toast .uni-icon-success,
+uni-toast .uni-icon_toast,
+.uni-toast .uni-icon_toast,
+uni-toast .uni-icon-success:before,
+.uni-toast .uni-icon-success:before,
+uni-toast [class*="uni-icon"],
+.uni-toast [class*="uni-icon"] {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+/* ========== SVG 图标居中 ========== */
+uni-toast svg,
+.uni-toast svg {
+  display: block;
+  margin: 0 auto;
+}
+
+/* ========== H5 平台特定 ========== */
+.uni-sample-toast,
+uni-toast .uni-sample-toast,
+.uni-toast .uni-sample-toast {
+  text-align: center;
+}
+
+/* ========== 文字居中 ========== */
+uni-toast p,
+.uni-toast p,
+uni-toast text,
+.uni-toast text,
+uni-toast span,
+.uni-toast span {
+  text-align: center;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ========== 内部 view 居中（不使用 flex 避免影响隐藏） ========== */
+uni-toast .uni-toast__content > view,
+.uni-toast .uni-toast__content > view {
+  text-align: center;
+  margin: 0 auto;
+}
