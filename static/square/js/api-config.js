@@ -1,10 +1,11 @@
 // API配置和用户认证模块
 // 用于所有square相关的HTML页面
 
-// API配置
-const API_BASE_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:8000'  // 本地开发
-    : 'http://upme.cool';       // 生产环境
+// API配置 - 自动根据域名切换环境
+const API_BASE_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:8000'      // 本地开发
+    : 'http://upme.cool:8000';     // 生产环境（如果后端使用8000端口）
+    // 如果生产环境使用Nginx反向代理，改为: 'http://upme.cool'
 
 // 获取token（从localStorage读取，与uni-app共享）
 function getAuthToken() {

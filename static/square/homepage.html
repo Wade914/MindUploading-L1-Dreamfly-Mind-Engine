@@ -688,7 +688,6 @@
         // 加载其他用户的数据
         async function loadOtherUserData(userId, currentUserId) {
             try {
-                const API_BASE_URL = 'http://localhost:8000';
                 const token = localStorage.getItem('auth_token');
 
                 // 从 Square API 获取用户资料
@@ -810,8 +809,6 @@
                     loadUserStats();
                     return;
                 }
-
-                const API_BASE_URL = 'http://localhost:8000';
 
                 // 1. 从 minds API 获取真实姓名、个人简介和人生里程碑
                 try {
@@ -1121,7 +1118,6 @@
         // 加载用户的思想元胞
         async function loadUserThoughtCells() {
             try {
-                const API_BASE_URL = 'http://localhost:8000';
                 const token = localStorage.getItem('auth_token');
 
                 if (!token) {
@@ -1975,7 +1971,6 @@
             if (!confirmed) return;
 
             try {
-                const API_BASE_URL = 'http://localhost:8000';
                 const token = localStorage.getItem('auth_token');
 
                 if (!token) {
@@ -2047,8 +2042,6 @@
             const commentsList = document.getElementById(`comments-list-${thoughtId}`);
 
             try {
-                const API_BASE_URL = 'http://localhost:8000';
-
                 // 调用后端 API 获取评论
                 const response = await fetch(`${API_BASE_URL}/api/square/thoughts/${thoughtId}/comments`);
 
@@ -2114,7 +2107,6 @@
             }
 
             try {
-                const API_BASE_URL = 'http://localhost:8000';
                 const token = localStorage.getItem('auth_token');
 
                 if (!token) {
@@ -3006,7 +2998,6 @@
         // 加载收藏的思想元胞
         async function loadBookmarkedThoughts() {
             try {
-                const API_BASE_URL = 'http://localhost:8000';
                 const token = localStorage.getItem('auth_token');
 
                 if (!token) {
@@ -3070,7 +3061,6 @@
         // 收藏功能
         async function toggleBookmark(thoughtId) {
             try {
-                const API_BASE_URL = 'http://localhost:8000';
                 const token = localStorage.getItem('auth_token');
 
                 if (!token) {
@@ -3124,7 +3114,6 @@
         // 点赞功能
         async function likeThought(thoughtId) {
             try {
-                const API_BASE_URL = 'http://localhost:8000';
                 const token = localStorage.getItem('auth_token');
 
                 if (!token) {
