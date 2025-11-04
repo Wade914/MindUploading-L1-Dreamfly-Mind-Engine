@@ -19,3 +19,54 @@ dist
 *.njsproj
 *.sln
 *.sw?
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+*.manifest
+*.spec
+
+# Virtual environments (关键！)
+venv/
+ENV/
+.env
+.venv/
+pyenv.cfg
+
+# Local & user-generated data (关键！)
+pybackend/uploads/
+uploads/
+*.db
+*.sqlite3
+*.sqlite
+
+# System & IDE (补充)
+Thumbs.db
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# Optional: 如果 .htaccess 是环境相关配置，也应忽略
+# .htaccess
