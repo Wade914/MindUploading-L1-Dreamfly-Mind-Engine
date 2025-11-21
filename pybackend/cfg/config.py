@@ -6,7 +6,6 @@
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
-import os
 
 
 class Settings(BaseSettings):
@@ -65,6 +64,11 @@ class Settings(BaseSettings):
     DEEPSEEK_MODEL: str = ""
     COSYVOICE_MODEL: str = ""
 
+    # 扣子智能体配置
+    COZE_API_TOKEN: str = ""
+    COZE_API_BASE_URL: str = "https://api.coze.cn"
+    COZE_BOT_ID: str = ""
+
     # AI请求配置
     AI_TEMPERATURE: float = 0.7
     AI_MAX_TOKENS: int = 1024
@@ -78,7 +82,13 @@ class Settings(BaseSettings):
     # 服务器配置
     HOST: str = "0.0.0.0"
     PORT: int = 8000
-    
+
+    # RAG配置
+    CHROMA_DB_PATH: str = "./pybackend/chroma_db"  # ChromaDB数据存储路径
+    EMBEDDING_MODEL: str = "BAAI/bge-small-zh-v1.5"  # 中文embedding模型
+    EMBEDDING_DIMENSION: int = 512  # bge-small-zh-v1.5的维度
+    RAG_TOP_K: int = 3  # 默认检索结果数量
+    RAG_ENABLED: bool = True  # 是否启用RAG功能
 
 
 

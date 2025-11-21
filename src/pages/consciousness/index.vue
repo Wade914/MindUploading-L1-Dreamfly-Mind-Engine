@@ -104,6 +104,9 @@
       @confirm="handleModalConfirm"
       @cancel="handleModalCancel"
     />
+
+    <!-- AI 助手 -->
+    <AIAssistant />
   </view>
 </template>
 
@@ -113,6 +116,7 @@ import authManager from '@/utils/auth.js'
 import { get } from '@/utils/request.js'
 import { setModalInstance } from '@/utils/modal.js'
 import CustomModal from '@/components/CustomModal.vue'
+import AIAssistant from '@/components/AIAssistant.vue'
 import KnowledgeModule from './knowledge/index.vue'
 import MemoryModule from './memory/index.vue'
 import PersonalityModule from './personality/index.vue'
@@ -122,6 +126,7 @@ import SocialModule from './social/index.vue'
 export default {
   components: {
     CustomModal,
+    AIAssistant,
     'module-knowledge': KnowledgeModule,
     'module-memory': MemoryModule,
     'module-personality': PersonalityModule,

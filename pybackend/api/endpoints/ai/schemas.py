@@ -45,3 +45,27 @@ class ErrorResponseSchema(BaseModel):
     error: Dict[str, Any]
     code: int
     message: str
+
+
+class CozeMessage(BaseModel):
+    """扣子消息"""
+    role: str
+    type: str
+    content: str
+    content_type: str
+
+
+class CozeUsage(BaseModel):
+    """扣子使用统计"""
+    token_count: int
+    output_count: int
+    input_count: int
+
+
+class CozeResponseSchema(BaseModel):
+    """扣子聊天响应模式"""
+    conversation_id: str
+    chat_id: Optional[str] = None
+    message: Optional[CozeMessage] = None
+    usage: Optional[CozeUsage] = None
+    status: Optional[str] = None

@@ -40,7 +40,7 @@ class MindService:
     async def create_mind(self, params: CreateMindParams) -> CreateMindResponseSchema:
         """创建意识体"""
         filename = self._generate_filename(params.name)
-        
+
         # 检查是否已存在同名意识体（防止重复创建）
         query = select(Mind).where(
             Mind.user_id == params.user_id,
@@ -60,6 +60,30 @@ class MindService:
         except Exception as e:
             raise UnicornException(code=500, errmsg=f"保存文件失败: {str(e)}")
 
+        # 尝试上传音频到SiliconFlow获取voice_id
+        voice_id = None
+        try:
+            # 解析mind_content提取voice_prompt
+            voice_base64 = self._extract_voice_from_mind_content(params.mind_content)
+
+            if voice_base64:
+                # 导入AIService
+                from api.endpoints.ai.service import AIService
+                ai_service = AIService()
+
+                # 上传音频
+                voice_id = await ai_service.upload_voice_to_siliconflow(
+                    voice_base64,
+                    filename=f"{params.name}_voice.wav"
+                )
+
+                if voice_id:
+                    print(f"✅ 意识体 '{params.name}' 的音频已上传，voice_id: {voice_id}")
+                else:
+                    print(f"⚠️ 意识体 '{params.name}' 的音频上传失败，将使用默认音色")
+        except Exception as e:
+            print(f"⚠️ 上传音频时出错: {str(e)}，将继续创建意识体但不设置voice_id")
+
         # 创建数据库记录
         mind = Mind(
             user_id=params.user_id,
@@ -69,7 +93,8 @@ class MindService:
             protocol=params.protocol,
             blockchain=params.blockchain,
             filename=filename,
-            content=params.mind_content
+            content=params.mind_content,
+            voice_id=voice_id
         )
 
         self.db.add(mind)
@@ -79,11 +104,66 @@ class MindService:
         # 同步数据到 user_profiles 表
         await self._sync_to_user_profile(params.user_id, params.mind_content)
 
+        # 【RAG集成】向量化mind中的记忆片段
+        vectorize_count = 0
+        try:
+            from cfg.config import settings
+            if getattr(settings, 'RAG_ENABLED', True):
+                from api.endpoints.rag.service import get_rag_service
+                import json
+
+                # 解析mind_content提取记忆片段
+                json_str = params.mind_content.replace('export default ', '').strip()
+                mind_data = json.loads(json_str)
+
+                if 'memory' in mind_data and 'memory_fragments' in mind_data['memory']:
+                    fragments = mind_data['memory']['memory_fragments']
+                    rag_service = get_rag_service()
+
+                    for idx, fragment in enumerate(fragments):
+                        if 'content' in fragment:
+                            success = await rag_service.vectorize_and_store(
+                                collection_name="memories",
+                                doc_id=f"mind_mem_{params.user_id}_{mind.id}_{idx}",
+                                content=fragment['content'],
+                                metadata={
+                                    "user_id": params.user_id,
+                                    "mind_id": mind.id,
+                                    "mind_name": params.name,
+                                    "time": fragment.get('time', ''),
+                                    "source": "mind_file"
+                                }
+                            )
+                            if success:
+                                vectorize_count += 1
+
+                    print(f"✅ Mind '{params.name}' 的 {vectorize_count}/{len(fragments)} 个记忆片段已向量化")
+        except Exception as e:
+            print(f"⚠️ Mind记忆片段向量化失败（不影响创建）: {str(e)}")
+
         return CreateMindResponseSchema(
             mind_id=mind.id,
             filename=filename,
             created=mind.created_at
         )
+
+    def _extract_voice_from_mind_content(self, mind_content: str) -> str:
+        """从mind_content中提取voice_prompt的base64数据"""
+        try:
+            # mind_content格式: export default {...}
+            # 去除 "export default " 前缀
+            json_str = mind_content.replace('export default ', '').strip()
+
+            # 解析JSON
+            mind_data = json.loads(json_str)
+
+            # 提取voice_prompt
+            voice_prompt = mind_data.get('metadata', {}).get('voice_prompt', '')
+
+            return voice_prompt if voice_prompt else None
+        except Exception as e:
+            print(f"⚠️ 解析mind_content提取voice失败: {str(e)}")
+            return None
 
     async def get_mind_list(self, params: ListMindParams) -> MindListResponseSchema:
         """获取意识体列表"""
@@ -253,3 +333,57 @@ class MindService:
         except Exception as e:
             # 同步失败不影响 mind 创建,只记录错误
             print(f"Failed to sync mind data to user_profile: {str(e)}")
+
+    async def upload_voice_for_mind(self, mind_id: str, voice_base64: str, user_id: str) -> dict:
+        """为意识体重新上传音频"""
+        # 查询意识体
+        query = select(Mind).where(Mind.id == mind_id, Mind.user_id == user_id)
+        result = await self.db.execute(query)
+        mind = result.scalar_one_or_none()
+
+        if not mind:
+            raise UnicornException(code=404, errmsg="意识体不存在或无权限")
+
+        # 上传音频到SiliconFlow
+        try:
+            from api.endpoints.ai.service import AIService
+            ai_service = AIService()
+
+            voice_id = await ai_service.upload_voice_to_siliconflow(
+                voice_base64,
+                filename=f"{mind.name}_voice.wav"
+            )
+
+            if voice_id:
+                # 更新数据库
+                mind.voice_id = voice_id
+                await self.db.commit()
+                await self.db.refresh(mind)
+
+                return {
+                    "mind_id": mind.id,
+                    "voice_id": voice_id,
+                    "message": "音频上传成功"
+                }
+            else:
+                raise UnicornException(code=500, errmsg="音频上传到SiliconFlow失败")
+
+        except Exception as e:
+            raise UnicornException(code=500, errmsg=f"上传音频失败: {str(e)}")
+
+    async def get_mind_by_filename(self, filename: str) -> dict:
+        """根据文件名获取意识体信息"""
+        query = select(Mind).where(Mind.filename == filename)
+        result = await self.db.execute(query)
+        mind = result.scalar_one_or_none()
+
+        if not mind:
+            raise UnicornException(code=404, errmsg="意识体不存在")
+
+        return {
+            "id": mind.id,
+            "name": mind.name,
+            "filename": mind.filename,
+            "voice_id": mind.voice_id,
+            "created_at": mind.created_at.isoformat() if mind.created_at else None
+        }

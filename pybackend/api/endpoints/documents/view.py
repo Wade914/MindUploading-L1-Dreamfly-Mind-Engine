@@ -73,7 +73,45 @@ async def upload_document(
         document = await DocumentService.create_document_record(
             db, user_id, file.filename, file_ext, len(file_content), file_path
         )
-        
+
+        # 【RAG集成】自动向量化文档（异步，不阻塞响应）
+        vectorize_success = False
+        try:
+            from cfg.config import settings
+            if getattr(settings, 'RAG_ENABLED', True):
+                from api.endpoints.rag.service import get_rag_service
+
+                # 提取文本内容
+                # 优先使用数据库中的extracted_text，如果没有则尝试直接解码
+                extracted_text = document.extracted_text
+
+                if not extracted_text and file_ext in ['.txt', '.md', '.json', '.csv']:
+                    # 对于文本文件，直接解码
+                    try:
+                        extracted_text = file_content.decode('utf-8', errors='ignore')
+                    except:
+                        extracted_text = None
+
+                # 只有当有文本内容时才向量化
+                if extracted_text and len(extracted_text.strip()) > 0:
+                    rag_service = get_rag_service()
+                    vectorize_success = await rag_service.vectorize_and_store(
+                        collection_name="documents",
+                        doc_id=f"doc_{user_id}_{document.id}",
+                        content=extracted_text,
+                        metadata={
+                            "user_id": user_id,
+                            "doc_id": document.id,
+                            "filename": file.filename,
+                            "file_type": file_ext
+                        }
+                    )
+                    print(f"✅ 文档 {document.id} 向量化{'成功' if vectorize_success else '失败'}")
+                else:
+                    print(f"ℹ️ 文档 {document.id} 没有可提取的文本内容，跳过向量化")
+        except Exception as e:
+            print(f"⚠️ 文档向量化失败（不影响上传）: {str(e)}")
+
         return success(
             data={
                 "document": document.model_dump(),
@@ -81,7 +119,8 @@ async def upload_document(
                     "document_id": document.id,
                     "filename": document.filename,
                     "file_size": document.file_size,
-                    "status": document.status
+                    "status": document.status,
+                    "vectorized": vectorize_success
                 }
             },
             msg="文档上传成功"

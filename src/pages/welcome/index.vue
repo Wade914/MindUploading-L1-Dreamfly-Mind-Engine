@@ -37,12 +37,16 @@
     </view>
 
     <view class="overlay"></view>
+
+    <!-- AI 助手 -->
+    <AIAssistant />
   </view>
 </template>
 
 <script setup>
 import { onMounted } from 'vue'
 import authManager from '@/utils/auth.js'
+import AIAssistant from '@/components/AIAssistant.vue'
 
 const handleStartClick = () => {
   uni.navigateTo({

@@ -20,11 +20,42 @@ db_path = Path(__file__).parent.parent / "dreamfly.db"
 DATABASE_URL = f"sqlite+aiosqlite:///{db_path}"
 
 
+async def add_voice_id_to_minds(engine):
+    """为 minds 表添加 voice_id 字段"""
+
+    print("🎤 开始为 minds 表添加 voice_id 字段...")
+
+    # 添加 voice_id 字段（如果不存在）
+    add_voice_id_sql = """
+    ALTER TABLE minds ADD COLUMN voice_id VARCHAR(200);
+    """
+
+    async with engine.begin() as conn:
+        try:
+            # 先检查字段是否已存在
+            check_sql = "PRAGMA table_info(minds)"
+            result = await conn.execute(text(check_sql))
+            columns = result.fetchall()
+            column_names = [col[1] for col in columns]
+
+            if 'voice_id' not in column_names:
+                print("  📝 添加 voice_id 字段到 minds 表...")
+                await conn.execute(text(add_voice_id_sql))
+                print("  ✅ voice_id 字段添加成功！")
+            else:
+                print("  ℹ️  voice_id 字段已存在，跳过添加")
+        except Exception as e:
+            print(f"  ⚠️  添加 voice_id 字段时出错: {str(e)}")
+            # 如果是因为字段已存在导致的错误，忽略它
+            if "duplicate column name" not in str(e).lower():
+                raise
+
+
 async def add_square_tables(engine):
     """添加 Square 广场功能所需的数据库表"""
-    
+
     print("🚀 开始添加 Square 广场数据库表...")
-    
+
     # 1. 思想元胞表
     thought_cells_sql = """
     CREATE TABLE IF NOT EXISTS thought_cells (
@@ -175,17 +206,20 @@ async def main():
     print("=" * 60)
     print(f"📊 数据库: {DATABASE_URL}")
     print()
-    
+
     # 创建数据库引擎
     engine = create_async_engine(DATABASE_URL, echo=False)
-    
+
     try:
+        # 添加 voice_id 字段到 minds 表
+        await add_voice_id_to_minds(engine)
+
         # 添加 Square 表
         await add_square_tables(engine)
-        
+
         # 验证表结构
         await verify_tables(engine)
-        
+
         print("\n" + "=" * 60)
         print("🎉 迁移完成！现有数据完全保留！")
         print("=" * 60)
@@ -194,7 +228,7 @@ async def main():
         print("  2. 在 main.py 中注册 Square 路由")
         print("  3. 测试 API 接口")
         print()
-        
+
     except Exception as e:
         print(f"\n❌ 迁移失败: {str(e)}")
         import traceback

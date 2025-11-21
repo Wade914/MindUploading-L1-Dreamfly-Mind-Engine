@@ -25,7 +25,37 @@ async def create_note(
     """创建新笔记"""
     try:
         note = await NotesService.create_note(db, user_id, note_data)
-        return success(data={"note": note.model_dump()}, msg="笔记创建成功")
+
+        # 【RAG集成】自动向量化笔记
+        vectorize_success = False
+        try:
+            from cfg.config import settings
+            if getattr(settings, 'RAG_ENABLED', True):
+                from api.endpoints.rag.service import get_rag_service
+
+                rag_service = get_rag_service()
+                vectorize_success = await rag_service.vectorize_and_store(
+                    collection_name="notes",
+                    doc_id=f"note_{user_id}_{note.id}",
+                    content=note.content,
+                    metadata={
+                        "user_id": user_id,
+                        "note_id": note.id,
+                        "title": note.title,
+                        "folder_id": note.folder_id
+                    }
+                )
+                print(f"✅ 笔记 {note.id} 向量化{'成功' if vectorize_success else '失败'}")
+        except Exception as e:
+            print(f"⚠️ 笔记向量化失败（不影响创建）: {str(e)}")
+
+        return success(
+            data={
+                "note": note.model_dump(),
+                "vectorized": vectorize_success
+            },
+            msg="笔记创建成功"
+        )
     except Exception as e:
         return fail(msg=f"创建笔记失败: {str(e)}")
 

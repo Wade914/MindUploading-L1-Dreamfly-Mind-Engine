@@ -157,14 +157,21 @@
         </text>
       </view>
     </scroll-view>
+
+    <!-- AI 助手 -->
+    <AIAssistant />
   </view>
 </template>
 
 <script>
 import authManager from '@/utils/auth.js'
 import { get } from '@/utils/request.js'
+import AIAssistant from '@/components/AIAssistant.vue'
 
 export default {
+  components: {
+    AIAssistant
+  },
   data() {
     return {
       isDragging: false,

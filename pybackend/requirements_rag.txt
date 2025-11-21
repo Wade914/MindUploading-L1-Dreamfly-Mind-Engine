@@ -1,0 +1,14 @@
+# RAG功能所需的Python依赖包
+# 安装命令: pip install -r requirements_rag.txt
+
+# ChromaDB - 向量数据库
+chromadb>=0.4.22
+
+# Sentence Transformers - 本地embedding模型
+sentence-transformers>=2.2.2
+
+# 依赖的底层库
+torch>=2.0.0  # PyTorch（sentence-transformers需要）
+transformers>=4.30.0  # Hugging Face Transformers
+numpy>=1.24.0  # 数值计算
+

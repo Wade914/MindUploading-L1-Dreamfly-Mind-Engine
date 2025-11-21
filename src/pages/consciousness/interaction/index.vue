@@ -9,7 +9,13 @@
         </view>
         <text class="terminal-title">MindOS Terminal v1.0.0</text>
       </view>
-      <text>{{ currentTime }}</text>
+      <view class="header-right">
+        <view class="voice-button" @click="toggleVoice" :class="{ 'active': voiceEnabled }">
+          <text class="voice-icon">{{ voiceEnabled ? '🔊' : '🔇' }}</text>
+          <text class="voice-text">{{ voiceEnabled ? 'VOICE ON' : 'VOICE OFF' }}</text>
+        </view>
+        <text>{{ currentTime }}</text>
+      </view>
     </view>
     
     <!-- 主体内容区域 -->
@@ -130,6 +136,9 @@ export default {
       gainNode: null,
       tickTimeout: null,
       currentEmotion: 'neutral',
+      voiceEnabled: false,  // 语音开关状态
+      currentVoiceId: null,  // 当前意识体的voice_id
+      audioPlayer: null,  // 音频播放器
       emotionSoundConfig: {
         happy: {
           type: 'sawtooth',
@@ -397,7 +406,11 @@ export default {
         
         // 计算生命天数
         const lifeDays = this.calculateLifeDays(mindData.metadata.birth)
-        
+
+        // 提取voice_id（如果存在）
+        // 需要从后端获取完整的mind信息，包括voice_id
+        await this.fetchVoiceId(file)
+
         // 设置意识体状态（基于实际mind数据）
         this.mindStatus = {
           '意识体': mindData.metadata.name || '未知',
@@ -521,6 +534,9 @@ export default {
           content: message
         })
 
+        // 【RAG集成】获取用户ID
+        const user_id = getApp().globalData.user_id || 'anonymous'
+
         // 准备API请求 - 恢复流式响应
         const response = await fetch(buildApiUrl('/api/ai/chat/completions'), {
           method: 'POST',
@@ -535,7 +551,9 @@ export default {
             ],
             temperature: 0.7,
             max_tokens: 1024,
-            stream: true  // 恢复流式响应
+            stream: true,  // 恢复流式响应
+            user_id: user_id,      // 【RAG新增】传递用户ID，启用知识检索
+            enable_rag: true       // 【RAG新增】启用RAG知识增强
           })
         })
 
@@ -599,6 +617,9 @@ export default {
 
         // 新增：记录交互到后端
         await this.recordInteraction(message, aiResponse)
+
+        // 播放语音回复
+        await this.playVoiceResponse(aiResponse)
 
       } catch (error) {
         console.error('API调用出错:', error)
@@ -869,6 +890,97 @@ export default {
       uni.navigateTo({
         url: '/pages/consciousness/index'
       })
+    },
+
+    toggleVoice() {
+      this.voiceEnabled = !this.voiceEnabled
+      const status = this.voiceEnabled ? 'ON' : 'OFF'
+      this.messages.push({
+        type: 'system',
+        content: `[SYSTEM] Voice output ${status}`,
+        timestamp: new Date().toLocaleTimeString()
+      })
+      this.scrollToBottom()
+    },
+
+    async playVoiceResponse(text) {
+      if (!this.voiceEnabled || !text) return
+
+      try {
+        const { post } = await import('@/utils/request.js')
+
+        // 构建TTS请求参数
+        const params = {
+          text: text,
+          voice: "FunAudioLLM/CosyVoice2-0.5B",
+          emotion: "happy",
+          speed: 1.0
+        }
+
+        // 如果有voice_id，添加到参数中
+        if (this.currentVoiceId) {
+          params.voice_id = this.currentVoiceId
+        }
+
+        // 调用TTS API
+        const response = await post('/api/audio/speech', params)
+
+        if (response && response.data && response.data.code === 200) {
+          const audioData = response.data.data.audio_data
+
+          if (audioData) {
+            // 将hex字符串转换为ArrayBuffer
+            const audioBuffer = this.hexToArrayBuffer(audioData)
+
+            // 创建Blob并播放
+            const blob = new Blob([audioBuffer], { type: 'audio/wav' })
+            const audioUrl = URL.createObjectURL(blob)
+
+            // 播放音频
+            if (this.audioPlayer) {
+              this.audioPlayer.pause()
+              URL.revokeObjectURL(this.audioPlayer.src)
+            }
+
+            this.audioPlayer = new Audio(audioUrl)
+            this.audioPlayer.play()
+
+            // 播放完成后清理
+            this.audioPlayer.onended = () => {
+              URL.revokeObjectURL(audioUrl)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('播放语音失败:', error)
+      }
+    },
+
+    hexToArrayBuffer(hexString) {
+      const bytes = new Uint8Array(hexString.length / 2)
+      for (let i = 0; i < hexString.length; i += 2) {
+        bytes[i / 2] = parseInt(hexString.substr(i, 2), 16)
+      }
+      return bytes.buffer
+    },
+
+    async fetchVoiceId(filename) {
+      try {
+        // 从后端获取mind的详细信息，包括voice_id
+        const { get } = await import('@/utils/request.js')
+        const response = await get(`/api/mind/info/${filename}`)
+
+        if (response && response.data && response.data.code === 200) {
+          const mindInfo = response.data.data
+          if (mindInfo.voice_id) {
+            this.currentVoiceId = mindInfo.voice_id
+            console.log('已获取voice_id:', this.currentVoiceId)
+          }
+        }
+      } catch (error) {
+        console.error('获取voice_id失败:', error)
+        // 不影响主要功能，继续执行
+      }
     }
   }
 }
@@ -1153,4 +1265,43 @@ export default {
     opacity: 1;
   }
 }
-</style> 
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.voice-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: rgba(0, 255, 0, 0.1);
+  border: 1px solid #0f0;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(0, 255, 0, 0.2);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+  }
+
+  &.active {
+    background: rgba(0, 255, 0, 0.3);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+  }
+
+  .voice-icon {
+    font-size: 16px;
+  }
+
+  .voice-text {
+    color: #0f0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    font-weight: bold;
+  }
+}
+</style>

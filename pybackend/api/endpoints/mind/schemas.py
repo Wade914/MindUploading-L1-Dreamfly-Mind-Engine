@@ -19,8 +19,9 @@ class MindSchema(BaseModel):
     protocol: str
     blockchain: str
     filename: str
+    voice_id: Optional[str] = None
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 

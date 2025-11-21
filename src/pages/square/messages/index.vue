@@ -1,11 +1,19 @@
 <template>
   <view class="container">
     <web-view :src="webviewUrl"></web-view>
+
+    <!-- AI 助手 -->
+    <AIAssistant />
   </view>
 </template>
 
 <script>
+import AIAssistant from '@/components/AIAssistant.vue'
+
 export default {
+  components: {
+    AIAssistant
+  },
   data() {
     return {
       webviewUrl: ''

@@ -172,11 +172,19 @@
         </view>
       </scroll-view>
     </view>
+
+    <!-- AI 助手 -->
+    <AIAssistant />
   </view>
 </template>
 
 <script>
+import AIAssistant from '@/components/AIAssistant.vue'
+
 export default {
+  components: {
+    AIAssistant
+  },
   data() {
     return {
       currentPage: 1,

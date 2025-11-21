@@ -69,12 +69,16 @@
         </view>
       </view>
     </view>
+
+    <!-- AI 助手 -->
+    <AIAssistant />
   </view>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import authManager from '@/utils/auth.js'
+import AIAssistant from '@/components/AIAssistant.vue'
 
 const form = ref({
   username: '',

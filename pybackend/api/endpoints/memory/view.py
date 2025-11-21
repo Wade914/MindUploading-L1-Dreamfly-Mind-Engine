@@ -39,7 +39,39 @@ async def create_memory_fragment(
     """创建新的记忆片段"""
     try:
         fragment = await MemoryService.create_memory_fragment(db, user_id, memory_data)
-        return success(data={"fragment": fragment.model_dump()}, msg="记忆片段创建成功")
+
+        # 【RAG集成】自动向量化记忆片段
+        vectorize_success = False
+        try:
+            from cfg.config import settings
+            if getattr(settings, 'RAG_ENABLED', True):
+                from api.endpoints.rag.service import get_rag_service
+
+                rag_service = get_rag_service()
+                vectorize_success = await rag_service.vectorize_and_store(
+                    collection_name="memories",
+                    doc_id=f"mem_{user_id}_{fragment.id}",
+                    content=fragment.content,
+                    metadata={
+                        "user_id": user_id,
+                        "memory_id": fragment.id,
+                        "title": fragment.title,
+                        "category": fragment.category,
+                        "importance": fragment.importance,
+                        "time_period": fragment.time_period
+                    }
+                )
+                print(f"✅ 记忆片段 {fragment.id} 向量化{'成功' if vectorize_success else '失败'}")
+        except Exception as e:
+            print(f"⚠️ 记忆片段向量化失败（不影响创建）: {str(e)}")
+
+        return success(
+            data={
+                "fragment": fragment.model_dump(),
+                "vectorized": vectorize_success
+            },
+            msg="记忆片段创建成功"
+        )
     except Exception as e:
         return fail(msg=f"创建记忆片段失败: {str(e)}")
 

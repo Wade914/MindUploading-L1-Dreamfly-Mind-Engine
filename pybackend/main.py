@@ -25,6 +25,7 @@ from api.endpoints.notes.view import router as notes_router
 from api.endpoints.social.view import router as social_router
 from api.endpoints.interaction.view import router as interaction_router
 from api.endpoints.square.view import router as square_router
+from api.endpoints.rag.view import router as rag_router  # 【RAG新增】
 
 app = FastAPI(
     title="DreamFly API",
@@ -61,6 +62,7 @@ app.include_router(notes_router, tags=["笔记管理"])
 app.include_router(social_router, tags=["社交网络"])
 app.include_router(interaction_router, prefix="/api", tags=["交互管理"])
 app.include_router(square_router, tags=["广场"])
+app.include_router(rag_router, prefix="/api", tags=["RAG知识检索"])  # 【RAG新增】
 
 # 挂载静态文件目录
 path_manager = get_path_manager()

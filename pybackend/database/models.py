@@ -42,6 +42,7 @@ class Mind(BaseModel):
     blockchain = Column(String(50), default="ethereum", comment="区块链")
     filename = Column(String(255), nullable=False, comment="文件名")
     content = Column(Text, comment="意识体内容")
+    voice_id = Column(String(200), comment="SiliconFlow音色ID")
 
     # 添加唯一约束，防止同一用户创建同名意识体
     __table_args__ = (

@@ -101,3 +101,36 @@ async def delete_mind(
     service = MindService(db)
     result = await service.delete_mind(mind_id, current_user_id)
     return success(data=result, msg="删除成功")
+
+
+@router.post("/mind/{mind_id}/upload-voice", summary="重新上传音频")
+async def upload_voice(
+    mind_id: str,
+    voice_base64: str,
+    db: AsyncSession = Depends(get_db),
+    current_user_id: str = Depends(get_current_user_id)
+) -> dict:
+    """
+    重新上传音频到SiliconFlow
+
+    - **mind_id**: 意识体ID
+    - **voice_base64**: base64编码的音频数据
+    """
+    service = MindService(db)
+    result = await service.upload_voice_for_mind(mind_id, voice_base64, current_user_id)
+    return success(data=result, msg="音频上传成功")
+
+
+@router.get("/mind/info/{filename}", summary="获取意识体详细信息")
+async def get_mind_info(
+    filename: str,
+    db: AsyncSession = Depends(get_db)
+) -> dict:
+    """
+    根据文件名获取意识体详细信息（包括voice_id）
+
+    - **filename**: 意识体文件名（例如：jobs.mind）
+    """
+    service = MindService(db)
+    result = await service.get_mind_by_filename(filename)
+    return success(data=result, msg="获取成功")

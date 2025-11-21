@@ -1,12 +1,16 @@
 <template>
   <view class="mindos-container">
     <web-view :src="htmlUrl" @message="handleMessage"></web-view>
+
+    <!-- AI 助手 -->
+    <AIAssistant />
   </view>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import authManager from '@/utils/auth.js'
+import AIAssistant from '@/components/AIAssistant.vue'
 
 const htmlUrl = ref('/static/square/mindos.html')
 
