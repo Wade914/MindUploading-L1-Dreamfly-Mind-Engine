@@ -58,6 +58,10 @@ uploads/
 *.sqlite3
 *.sqlite
 
+# RAG向量数据库 (运行时生成，不应提交)
+pybackend/chroma_db/
+chroma_db/
+
 # System & IDE (补充)
 Thumbs.db
 .DS_Store

@@ -69,9 +69,9 @@ async def upload_document(
         with open(str(file_path), "wb") as f:
             f.write(file_content)
         
-        # 创建数据库记录
+        # 创建数据库记录（将Path对象转换为字符串）
         document = await DocumentService.create_document_record(
-            db, user_id, file.filename, file_ext, len(file_content), file_path
+            db, user_id, file.filename, file_ext, len(file_content), str(file_path)
         )
 
         # 【RAG集成】自动向量化文档（异步，不阻塞响应）

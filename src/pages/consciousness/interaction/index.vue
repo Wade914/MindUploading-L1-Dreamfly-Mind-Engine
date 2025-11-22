@@ -10,6 +10,10 @@
         <text class="terminal-title">MindOS Terminal v1.0.0</text>
       </view>
       <view class="header-right">
+        <view class="rag-button" @click="toggleRAG" :class="{ 'active': ragEnabled }">
+          <text class="rag-icon">{{ ragEnabled ? '🧠' : '💤' }}</text>
+          <text class="rag-text">{{ ragEnabled ? 'RAG ON' : 'RAG OFF' }}</text>
+        </view>
         <view class="voice-button" @click="toggleVoice" :class="{ 'active': voiceEnabled }">
           <text class="voice-icon">{{ voiceEnabled ? '🔊' : '🔇' }}</text>
           <text class="voice-text">{{ voiceEnabled ? 'VOICE ON' : 'VOICE OFF' }}</text>
@@ -137,6 +141,7 @@ export default {
       tickTimeout: null,
       currentEmotion: 'neutral',
       voiceEnabled: false,  // 语音开关状态
+      ragEnabled: true,     // RAG知识增强开关（默认开启）
       currentVoiceId: null,  // 当前意识体的voice_id
       audioPlayer: null,  // 音频播放器
       emotionSoundConfig: {
@@ -552,8 +557,8 @@ export default {
             temperature: 0.7,
             max_tokens: 1024,
             stream: true,  // 恢复流式响应
-            user_id: user_id,      // 【RAG新增】传递用户ID，启用知识检索
-            enable_rag: true       // 【RAG新增】启用RAG知识增强
+            user_id: user_id,           // 【RAG新增】传递用户ID，启用知识检索
+            enable_rag: this.ragEnabled // 【RAG新增】根据开关状态启用/禁用RAG
           })
         })
 
@@ -903,6 +908,17 @@ export default {
       this.scrollToBottom()
     },
 
+    toggleRAG() {
+      this.ragEnabled = !this.ragEnabled
+      const status = this.ragEnabled ? 'ON' : 'OFF'
+      this.messages.push({
+        type: 'system',
+        content: `[SYSTEM] RAG Knowledge Enhancement ${status}`,
+        timestamp: new Date().toLocaleTimeString()
+      })
+      this.scrollToBottom()
+    },
+
     async playVoiceResponse(text) {
       if (!this.voiceEnabled || !text) return
 
@@ -922,11 +938,17 @@ export default {
           params.voice_id = this.currentVoiceId
         }
 
-        // 调用TTS API
-        const response = await post('/api/audio/speech', params)
+        // 调用TTS API（修正路径：/api/ai/audio/speech）
+        const response = await post('/api/ai/audio/speech', params)
 
-        if (response && response.data && response.data.code === 200) {
+        console.log('🔊 TTS完整响应:', response)
+        console.log('🔊 响应data:', response.data)
+
+        // 修正数据访问路径：response.data 是后端返回的 {code, message, data}
+        if (response && response.data && response.data.code === 200 && response.data.data) {
           const audioData = response.data.data.audio_data
+
+          console.log('🎵 音频数据长度:', audioData ? audioData.length : 0)
 
           if (audioData) {
             // 将hex字符串转换为ArrayBuffer
@@ -936,6 +958,8 @@ export default {
             const blob = new Blob([audioBuffer], { type: 'audio/wav' })
             const audioUrl = URL.createObjectURL(blob)
 
+            console.log('✅ 准备播放音频')
+
             // 播放音频
             if (this.audioPlayer) {
               this.audioPlayer.pause()
@@ -943,12 +967,30 @@ export default {
             }
 
             this.audioPlayer = new Audio(audioUrl)
-            this.audioPlayer.play()
+
+            // 添加播放事件监听
+            this.audioPlayer.onplay = () => {
+              console.log('▶️ 音频开始播放')
+            }
+
+            this.audioPlayer.onerror = (e) => {
+              console.error('❌ 音频播放错误:', e)
+            }
+
+            await this.audioPlayer.play()
 
             // 播放完成后清理
             this.audioPlayer.onended = () => {
+              console.log('⏹️ 音频播放完成')
               URL.revokeObjectURL(audioUrl)
             }
+          } else {
+            console.warn('⚠️ 没有音频数据')
+          }
+        } else {
+          console.error('❌ TTS响应格式错误:', response)
+          if (response && response.data) {
+            console.error('错误信息:', response.data.message)
           }
         }
       } catch (error) {
@@ -1270,6 +1312,39 @@ export default {
   display: flex;
   align-items: center;
   gap: 15px;
+}
+
+.rag-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: rgba(0, 255, 0, 0.1);
+  border: 1px solid #0f0;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(0, 255, 0, 0.2);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+  }
+
+  &.active {
+    background: rgba(0, 255, 0, 0.3);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+  }
+
+  .rag-icon {
+    font-size: 16px;
+  }
+
+  .rag-text {
+    color: #0f0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    font-weight: bold;
+  }
 }
 
 .voice-button {

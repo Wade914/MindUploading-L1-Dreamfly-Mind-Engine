@@ -206,15 +206,23 @@ class AIService:
 
         # 构建请求数据
         # 如果提供了voice_id，优先使用用户预置音色
-        voice_to_use = params.voice_id if params.voice_id else params.emotion
+        # 否则使用系统预置音色（温柔女声 claire）
+        # 注意：系统预置音色格式为 "模型名:音色名"
+        if params.voice_id:
+            voice_to_use = params.voice_id
+        else:
+            # 使用系统预置音色，格式：模型名:音色名
+            voice_to_use = f"{params.voice}:claire"
 
         request_data = {
             "model": params.voice,
             "input": params.text,
-            "voice": voice_to_use,  # 使用voice_id或emotion
+            "voice": voice_to_use,  # 使用voice_id或系统预置音色
             "speed": params.speed
         }
-        
+
+        print(f"🔊 TTS请求参数: {request_data}")
+
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -223,25 +231,37 @@ class AIService:
                     json=request_data,
                     timeout=60.0
                 )
-                
+
+                print(f"🔊 SiliconFlow响应状态: {response.status_code}")
+
                 if response.status_code != 200:
                     error_text = response.text
+                    print(f"❌ SiliconFlow错误响应: {error_text}")
                     raise UnicornException(
-                        code=response.status_code, 
+                        code=response.status_code,
                         errmsg=f"语音服务调用失败: {error_text}"
                     )
-                
+
                 # 假设返回的是音频数据
                 audio_data = response.content
-                
+                print(f"✅ 音频数据大小: {len(audio_data)} bytes")
+
                 return VoiceResponseSchema(
                     audio_data=audio_data.hex() if audio_data else None,
                     format="wav"
                 )
-                
+
+        except UnicornException:
+            raise
         except httpx.RequestError as e:
+            print(f"❌ 网络请求错误: {str(e)}")
+            import traceback
+            traceback.print_exc()
             raise UnicornException(code=500, errmsg=f"网络请求失败: {str(e)}")
         except Exception as e:
+            print(f"❌ 语音服务异常: {str(e)}")
+            import traceback
+            traceback.print_exc()
             raise UnicornException(code=500, errmsg=f"语音服务异常: {str(e)}")
 
     async def upload_voice_to_siliconflow(self, voice_base64: str, filename: str = "voice.wav") -> Optional[str]:

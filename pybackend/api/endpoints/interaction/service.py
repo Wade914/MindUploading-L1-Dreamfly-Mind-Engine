@@ -67,7 +67,10 @@ class InteractionService:
 
         except Exception as e:
             await self.db.rollback()
-            print(f"记录交互失败详细错误: {str(e)}")  # 添加调试信息
+            import traceback
+            error_detail = traceback.format_exc()
+            print(f"❌ 记录交互失败详细错误:")
+            print(error_detail)
             raise UnicornException(code=500, errmsg=f"记录交互失败: {str(e)}")
 
     async def update_interaction_count(self, params: UpdateInteractionCountParams):
@@ -100,7 +103,7 @@ class InteractionService:
                     "mind_name": params.mind_name
                 })
             else:
-                # 创建新的意识体资产记录
+                # 创建新的意识体资产记录（id字段自动生成，不需要手动指定）
                 insert_query = text("""
                     INSERT INTO user_consciousness_assets
                     (user_id, name, type, completeness, interactions_count, last_interaction_at, created_at, updated_at)
