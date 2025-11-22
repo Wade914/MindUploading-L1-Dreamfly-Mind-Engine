@@ -476,15 +476,12 @@ export default {
         return '你是一个AI助手，请根据问题进行回答。';
       }
 
-      console.log('构建interaction提示词，mind数据:', mindData);
-
       // 构建完整的提示词，不包含指导语
       let prompt = '';
 
       // 如果有现成的personality_prompt，作为基础
       if (mindData.metadata && mindData.metadata.personality_prompt) {
         prompt = mindData.metadata.personality_prompt;
-        console.log('使用现成的personality_prompt作为基础:', prompt);
       } else {
         prompt = `你现在要扮演一个数字意识体，基于以下个人信息进行回答：`;
       }
@@ -522,7 +519,6 @@ export default {
         hasAdditionalInfo = true;
       }
 
-      console.log('构建的interaction提示词:', prompt);
       return prompt;
     },
 
@@ -941,9 +937,6 @@ export default {
         // 调用TTS API（修正路径：/api/ai/audio/speech）
         const response = await post('/api/ai/audio/speech', params)
 
-        console.log('🔊 TTS完整响应:', response)
-        console.log('🔊 响应data:', response.data)
-
         // 修正数据访问路径：response.data 是后端返回的 {code, message, data}
         if (response && response.data && response.data.code === 200 && response.data.data) {
           const audioData = response.data.data.audio_data
@@ -988,9 +981,8 @@ export default {
             console.warn('⚠️ 没有音频数据')
           }
         } else {
-          console.error('❌ TTS响应格式错误:', response)
-          if (response && response.data) {
-            console.error('错误信息:', response.data.message)
+          if (response && response.data && response.data.message) {
+            console.error('TTS错误:', response.data.message)
           }
         }
       } catch (error) {

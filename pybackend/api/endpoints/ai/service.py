@@ -221,8 +221,6 @@ class AIService:
             "speed": params.speed
         }
 
-        print(f"🔊 TTS请求参数: {request_data}")
-
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -232,19 +230,15 @@ class AIService:
                     timeout=60.0
                 )
 
-                print(f"🔊 SiliconFlow响应状态: {response.status_code}")
-
                 if response.status_code != 200:
                     error_text = response.text
-                    print(f"❌ SiliconFlow错误响应: {error_text}")
                     raise UnicornException(
                         code=response.status_code,
                         errmsg=f"语音服务调用失败: {error_text}"
                     )
 
-                # 假设返回的是音频数据
+                # 返回音频数据
                 audio_data = response.content
-                print(f"✅ 音频数据大小: {len(audio_data)} bytes")
 
                 return VoiceResponseSchema(
                     audio_data=audio_data.hex() if audio_data else None,
@@ -254,9 +248,6 @@ class AIService:
         except UnicornException:
             raise
         except httpx.RequestError as e:
-            print(f"❌ 网络请求错误: {str(e)}")
-            import traceback
-            traceback.print_exc()
             raise UnicornException(code=500, errmsg=f"网络请求失败: {str(e)}")
         except Exception as e:
             print(f"❌ 语音服务异常: {str(e)}")
