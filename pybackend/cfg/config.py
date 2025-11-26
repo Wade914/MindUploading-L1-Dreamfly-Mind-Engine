@@ -24,12 +24,12 @@ class Settings(BaseSettings):
 
     # 数据库配置
     DATABASE_URL: str = ""
-    DATABASE_DIR: str = "./pybackend/database"
+    DATABASE_DIR: str = "./database"
 
     # 目录配置
-    UPLOAD_DIR: str = "./pybackend/uploads"
-    MINDS_DIR: str = "./pybackend/database/minds"
-    LOG_DIR: str = "./pybackend/logs"
+    UPLOAD_DIR: str = "./uploads"
+    MINDS_DIR: str = "./database/minds"
+    LOG_DIR: str = "./logs"
 
     # 上传子目录配置
     UPLOAD_THOUGHT_DIR: str = "thought"
@@ -84,7 +84,7 @@ class Settings(BaseSettings):
     PORT: int = 8000
 
     # RAG配置
-    CHROMA_DB_PATH: str = "./pybackend/chroma_db"  # ChromaDB数据存储路径
+    CHROMA_DB_PATH: str = "./chroma_db"  # ChromaDB数据存储路径
     EMBEDDING_MODEL: str = "BAAI/bge-small-zh-v1.5"  # 中文embedding模型
     EMBEDDING_DIMENSION: int = 512  # bge-small-zh-v1.5的维度
     RAG_TOP_K: int = 3  # 默认检索结果数量
