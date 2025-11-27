@@ -18,6 +18,15 @@
           <text class="voice-icon">{{ voiceEnabled ? '🔊' : '🔇' }}</text>
           <text class="voice-text">{{ voiceEnabled ? 'VOICE ON' : 'VOICE OFF' }}</text>
         </view>
+        <!-- 音色选择器（仅在语音开启且无自定义voice_id时显示） -->
+        <view class="voice-selector" v-if="voiceEnabled && !currentVoiceId">
+          <picker :range="voiceOptions" range-key="label" :value="selectedVoiceIndex" @change="onVoiceChange">
+            <view class="voice-picker">
+              <text class="voice-picker-icon">🎙️</text>
+              <text class="voice-picker-text">{{ voiceOptions[selectedVoiceIndex].label }}</text>
+            </view>
+          </picker>
+        </view>
         <text>{{ currentTime }}</text>
       </view>
     </view>
@@ -144,6 +153,18 @@ export default {
       ragEnabled: true,     // RAG知识增强开关（默认开启）
       currentVoiceId: null,  // 当前意识体的voice_id
       audioPlayer: null,  // 音频播放器
+      // 系统预置音色选项
+      selectedVoiceIndex: 6,  // 默认选择 claire（温柔女声）
+      voiceOptions: [
+        { value: 'alex', label: '沉稳男声' },
+        { value: 'benjamin', label: '低沉男声' },
+        { value: 'charles', label: '磁性男声' },
+        { value: 'david', label: '欢快男声' },
+        { value: 'anna', label: '沉稳女声' },
+        { value: 'bella', label: '激情女声' },
+        { value: 'claire', label: '温柔女声' },
+        { value: 'diana', label: '欢快女声' }
+      ],
       emotionSoundConfig: {
         happy: {
           type: 'sawtooth',
@@ -915,6 +936,17 @@ export default {
       this.scrollToBottom()
     },
 
+    onVoiceChange(e) {
+      this.selectedVoiceIndex = e.detail.value
+      const selectedVoice = this.voiceOptions[this.selectedVoiceIndex]
+      this.messages.push({
+        type: 'system',
+        content: `[SYSTEM] Voice changed to: ${selectedVoice.label}`,
+        timestamp: new Date().toLocaleTimeString()
+      })
+      this.scrollToBottom()
+    },
+
     async playVoiceResponse(text) {
       if (!this.voiceEnabled || !text) return
 
@@ -925,13 +957,16 @@ export default {
         const params = {
           text: text,
           voice: "FunAudioLLM/CosyVoice2-0.5B",
-          emotion: "happy",
           speed: 1.0
         }
 
-        // 如果有voice_id，添加到参数中
+        // 如果有voice_id，使用用户自定义音色
+        // 否则使用选中的系统预置音色
         if (this.currentVoiceId) {
           params.voice_id = this.currentVoiceId
+        } else {
+          // 传递系统预置音色（格式：模型名:音色名，由后端处理）
+          params.preset_voice = this.voiceOptions[this.selectedVoiceIndex].value
         }
 
         // 调用TTS API（修正路径：/api/ai/audio/speech）
@@ -1370,5 +1405,38 @@ export default {
     font-size: 12px;
     font-weight: bold;
   }
+}
+
+.voice-selector {
+  display: flex;
+  align-items: center;
+}
+
+.voice-picker {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: rgba(0, 255, 0, 0.1);
+  border: 1px solid #0f0;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(0, 255, 0, 0.2);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+  }
+}
+
+.voice-picker-icon {
+  font-size: 16px;
+}
+
+.voice-picker-text {
+  color: #0f0;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  font-weight: bold;
 }
 </style>

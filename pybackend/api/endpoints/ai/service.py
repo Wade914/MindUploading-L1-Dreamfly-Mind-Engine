@@ -205,13 +205,16 @@ class AIService:
         }
 
         # 构建请求数据
-        # 如果提供了voice_id，优先使用用户预置音色
-        # 否则使用系统预置音色（温柔女声 claire）
+        # 优先级：voice_id > preset_voice > 默认claire
         # 注意：系统预置音色格式为 "模型名:音色名"
         if params.voice_id:
+            # 使用用户自定义音色
             voice_to_use = params.voice_id
+        elif params.preset_voice:
+            # 使用前端选择的系统预置音色
+            voice_to_use = f"{params.voice}:{params.preset_voice}"
         else:
-            # 使用系统预置音色，格式：模型名:音色名
+            # 默认使用温柔女声
             voice_to_use = f"{params.voice}:claire"
 
         request_data = {

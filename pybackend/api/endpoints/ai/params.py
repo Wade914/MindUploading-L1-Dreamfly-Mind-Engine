@@ -27,10 +27,10 @@ class ChatParams(BaseModel):
 class VoiceParams(BaseModel):
     """语音生成请求参数"""
     text: str = Field(..., min_length=1, max_length=1000, description="要生成语音的文本")
-    voice: Optional[str] = Field("FunAudioLLM/CosyVoice2-0.5B:alex", description="语音模型或voice_id")
-    emotion: Optional[str] = Field("happy", description="情感")
+    voice: Optional[str] = Field("FunAudioLLM/CosyVoice2-0.5B", description="语音模型")
     speed: Optional[float] = Field(1.0, ge=0.5, le=2.0, description="语音速度")
     voice_id: Optional[str] = Field(None, description="用户预置音色ID（优先使用）")
+    preset_voice: Optional[str] = Field(None, description="系统预置音色名称：alex/benjamin/charles/david/anna/bella/claire/diana")
 
 
 class CozeMessageParam(BaseModel):
