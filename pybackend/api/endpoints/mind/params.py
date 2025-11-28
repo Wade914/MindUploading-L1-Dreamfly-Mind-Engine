@@ -10,7 +10,7 @@ from typing import Optional
 
 class CreateMindParams(BaseModel):
     """创建意识体参数"""
-    user_id: str = Field(..., description="用户ID")
+    user_id: Optional[str] = Field(None, description="用户ID（将被JWT中的用户ID覆盖）")
     name: str = Field(..., min_length=1, max_length=100, description="意识体名称")
     birth: Optional[str] = Field(None, description="生日")
     mind_content: str = Field(..., description="意识体内容")

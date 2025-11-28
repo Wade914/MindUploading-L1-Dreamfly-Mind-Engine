@@ -330,6 +330,11 @@ export default {
         return
       }
 
+      // 如果正在播放，先停止播放
+      if (this.isPlaying) {
+        this.stopPreview()
+      }
+
       uni.showLoading({
         title: '上传中...'
       })
@@ -345,13 +350,13 @@ export default {
 
         // 保存音频文件到全局状态
         getApp().globalData.uploadData.voiceFile = this.recordingFile
-        
+
         uni.hideLoading()
         uni.showToast({
           title: '上传成功',
           icon: 'success'
         })
-        
+
         // 跳转到下一步
         setTimeout(() => {
           uni.navigateTo({
