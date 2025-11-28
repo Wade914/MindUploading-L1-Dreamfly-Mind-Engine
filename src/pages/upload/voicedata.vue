@@ -62,28 +62,31 @@
             </view>
 
             <view class="record-controls">
-              <button 
-                class="control-btn" 
+              <!-- 开始/停止录制按钮 -->
+              <button
+                class="control-btn"
                 :class="{ 'recording': isRecording }"
                 @click="toggleRecording"
+                v-if="!isPlaying"
               >
                 <text class="btn-icon">{{ isRecording ? '■' : '●' }}</text>
                 <text class="btn-text">{{ isRecording ? '停止录制' : '开始录制' }}</text>
               </button>
 
-              <!-- 试听控制按钮 -->
-              <button 
+              <!-- 试听/停止试听按钮 -->
+              <button
                 class="control-btn preview"
-                v-if="!isRecording && recordingFile && !isPlaying"
+                v-if="!isRecording && recordingFile"
                 @click="togglePreview"
               >
                 <text class="btn-icon">{{ isPlaying ? '■' : '▶' }}</text>
                 <text class="btn-text">{{ isPlaying ? '停止试听' : '试听录音' }}</text>
               </button>
 
-              <button 
+              <!-- 上传录音按钮（有录音文件时始终显示） -->
+              <button
                 class="control-btn upload"
-                v-if="!isRecording && recordingFile && !isPlaying"
+                v-if="!isRecording && recordingFile"
                 @click="uploadRecording"
               >
                 <text class="btn-icon">↑</text>
@@ -102,14 +105,7 @@
               <text class="time-info">{{ formatTime(currentTime) }} / {{ formatTime(duration) }}</text>
             </view>
 
-            <input 
-              type="file" 
-              accept=".mp3,.wav" 
-              class="file-input"
-              @change="handleFileUpload"
-              ref="fileInput"
-            />
-            
+            <!-- 上传已有录音文件按钮（通过原生 input 动态触发，兼容 H5） -->
             <button 
               class="upload-btn"
               @click="openFileSelector"
@@ -271,32 +267,58 @@ export default {
       return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
     },
 
+    // 打开系统文件选择器（仅 H5 有效）
     openFileSelector() {
-      this.$refs.fileInput.click()
+      if (typeof document === 'undefined') {
+        uni.showToast({
+          title: '当前环境暂不支持文件上传',
+          icon: 'none'
+        })
+        return
+      }
+
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = '.mp3,.wav,audio/mpeg,audio/wav'
+      input.style.display = 'none'
+
+      input.addEventListener('change', (event) => {
+        const file = event.target.files && event.target.files[0]
+        if (file) {
+          this.handleSelectedFile(file)
+        }
+        document.body.removeChild(input)
+      })
+
+      document.body.appendChild(input)
+      input.click()
     },
 
-    handleFileUpload(event) {
-      const file = event.target.files[0]
-      if (file) {
-        if (file.size > 10 * 1024 * 1024) { // 10MB限制
-          uni.showToast({
-            title: '文件大小不能超过10MB',
-            icon: 'none'
-          })
-          return
-        }
-        // 清除之前的录音
-        if (this.audioUrl) {
-          URL.revokeObjectURL(this.audioUrl)
-        }
-        this.recordingFile = file
-        this.audioUrl = URL.createObjectURL(file)
-        this.stopPreview()
+    // 统一处理选择到的文件（录音生成的 File 或 用户上传的 File）
+    handleSelectedFile(file) {
+      if (!file) return
+
+      if (file.size > 10 * 1024 * 1024) { // 10MB限制
         uni.showToast({
-          title: '文件已选择',
-          icon: 'success'
+          title: '文件大小不能超过10MB',
+          icon: 'none'
         })
+        return
       }
+
+      // 清除之前的录音
+      if (this.audioUrl) {
+        URL.revokeObjectURL(this.audioUrl)
+      }
+
+      this.recordingFile = file
+      this.audioUrl = URL.createObjectURL(file)
+      this.stopPreview()
+
+      uni.showToast({
+        title: '文件已选择',
+        icon: 'success'
+      })
     },
 
     async uploadRecording() {
@@ -617,6 +639,7 @@ $bg-gray: rgba(255, 255, 255, 0.08);
         }
 
         .upload-btn {
+          display: inline-block;
           background: none;
           border: none;
           padding: 12px 24px;
@@ -626,6 +649,7 @@ $bg-gray: rgba(255, 255, 255, 0.08);
             font-size: 14px;
             color: $text-gray;
             text-decoration: underline;
+            cursor: pointer;
           }
 
           &:hover .btn-text {
