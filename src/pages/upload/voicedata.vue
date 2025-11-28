@@ -50,6 +50,13 @@
               <text class="guide-title">支持格式</text>
               <text class="guide-content">mp3 / wav</text>
             </view>
+
+            <view class="guide-item warning">
+              <text class="guide-title">⚠️ 文件大小限制</text>
+              <text class="guide-content warning-text">• 音频文件不能超过 3.5MB</text>
+              <text class="guide-content warning-text">• 由于需要转换为 base64 格式，文件会增大约 33%</text>
+              <text class="guide-content warning-text">• 建议使用压缩格式（如 MP3）以减小文件大小</text>
+            </view>
           </view>
 
           <!-- 录音控制区 -->
@@ -298,10 +305,15 @@ export default {
     handleSelectedFile(file) {
       if (!file) return
 
-      if (file.size > 10 * 1024 * 1024) { // 10MB限制
+      // SilicoFlow API 限制 base64 编码后的数据最大 5MB
+      // 由于 base64 编码会增大约 33%，所以原始文件限制为 3.5MB
+      const MAX_FILE_SIZE = 3.5 * 1024 * 1024 // 3.5MB
+
+      if (file.size > MAX_FILE_SIZE) {
         uni.showToast({
-          title: '文件大小不能超过10MB',
-          icon: 'none'
+          title: '文件大小不能超过3.5MB',
+          icon: 'none',
+          duration: 3000
         })
         return
       }
@@ -480,6 +492,22 @@ $bg-gray: rgba(255, 255, 255, 0.08);
             color: $text-white;
             line-height: 1.6;
             display: block;
+          }
+
+          &.warning {
+            background: rgba(255, 152, 0, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #ff9800;
+
+            .guide-title {
+              color: #ff9800;
+            }
+
+            .warning-text {
+              color: rgba(255, 255, 255, 0.9);
+              font-weight: 500;
+            }
           }
 
           .reading-text {

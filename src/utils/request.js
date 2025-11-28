@@ -108,10 +108,16 @@ export function get(url, params = {}, options = {}) {
  * @returns {Promise} 请求结果
  */
 export function post(url, data = {}, options = {}) {
+  // 如果是创建意识体的请求，增加超时时间（因为包含大量base64数据）
+  const timeout = url.includes('/api/mind') && !url.includes('/api/minds')
+    ? 60000  // 60秒
+    : 10000  // 默认10秒
+
   return apiRequest({
     url,
     method: 'POST',
     data,
+    timeout,
     ...options
   })
 }
