@@ -11,7 +11,7 @@ from core.response import success
 from core.auth_middleware import get_current_user_id
 from typing import Optional
 
-from .params import CreateMindParams, ListMindParams
+from .params import CreateMindParams, ListMindParams, UpdateMindParams
 from .service import MindService
 
 router = APIRouter()
@@ -101,6 +101,26 @@ async def delete_mind(
     service = MindService(db)
     result = await service.delete_mind(mind_id, current_user_id)
     return success(data=result, msg="删除成功")
+
+
+@router.put("/mind/{mind_id}", summary="更新意识体")
+async def update_mind(
+    mind_id: str,
+    params: UpdateMindParams,
+    db: AsyncSession = Depends(get_db),
+    current_user_id: str = Depends(get_current_user_id)
+) -> dict:
+    """
+    更新意识体
+
+    - **mind_id**: 意识体ID
+    - **name**: 意识体名称（可选）
+    - **birth**: 生日（可选）
+    - **mind_content**: 意识体内容（可选）
+    """
+    service = MindService(db)
+    result = await service.update_mind(mind_id, current_user_id, params)
+    return success(data=result.model_dump(), msg="意识体更新成功")
 
 
 @router.post("/mind/{mind_id}/upload-voice", summary="重新上传音频")

@@ -16,12 +16,13 @@ from cfg.config import settings
 from core.path_manager import get_path_manager
 
 from .models import Mind
-from .params import CreateMindParams, GetMindParams, ListMindParams
+from .params import CreateMindParams, GetMindParams, ListMindParams, UpdateMindParams
 from .schemas import (
-    CreateMindResponseSchema, 
-    MindListResponseSchema, 
-    MindSchema, 
-    MindContentResponseSchema
+    CreateMindResponseSchema,
+    MindListResponseSchema,
+    MindSchema,
+    MindContentResponseSchema,
+    UpdateMindResponseSchema
 )
 
 
@@ -63,26 +64,26 @@ class MindService:
         # 尝试上传音频到SiliconFlow获取voice_id
         voice_id = None
         try:
-            # 解析mind_content提取voice_prompt
-            voice_base64 = self._extract_voice_from_mind_content(params.mind_content)
+            # 解析mind_content提取voice_prompt和参考文本
+            voice_base64, voice_reference_text = self._extract_voice_from_mind_content(params.mind_content)
 
             if voice_base64:
                 # 导入AIService
                 from api.endpoints.ai.service import AIService
                 ai_service = AIService()
 
-                # 上传音频
+                # 上传音频，同时传递参考文本
+                # 使用 user_id 作为 customName，符合 SiliconFlow 的命名规则（只允许字母数字_-）
                 voice_id = await ai_service.upload_voice_to_siliconflow(
                     voice_base64,
-                    filename=f"{params.name}_voice.wav"
+                    filename=f"voice_{params.user_id}.mp3",
+                    custom_name=f"voice_{params.user_id}",
+                    text=voice_reference_text  # 用户录音时朗读的文本
                 )
-
-                if voice_id:
-                    print(f"✅ 意识体 '{params.name}' 的音频已上传，voice_id: {voice_id}")
-                else:
-                    print(f"⚠️ 意识体 '{params.name}' 的音频上传失败，将使用默认音色")
         except Exception as e:
-            print(f"⚠️ 上传音频时出错: {str(e)}，将继续创建意识体但不设置voice_id")
+            # 上传失败不影响意识体创建，只记录错误
+            import traceback
+            traceback.print_exc()
 
         # 创建数据库记录
         mind = Mind(
@@ -147,8 +148,96 @@ class MindService:
             created=mind.created_at
         )
 
-    def _extract_voice_from_mind_content(self, mind_content: str) -> str:
-        """从mind_content中提取voice_prompt的base64数据"""
+    async def update_mind(self, mind_id: str, user_id: str, params: UpdateMindParams) -> UpdateMindResponseSchema:
+        """更新意识体"""
+        # 查找意识体
+        query = select(Mind).where(Mind.id == mind_id, Mind.user_id == user_id)
+        result = await self.db.execute(query)
+        mind = result.scalar_one_or_none()
+
+        if not mind:
+            raise UnicornException(code=404, errmsg="意识体不存在或无权访问")
+
+        # 更新数据库字段
+        if params.name is not None:
+            # 检查是否有同名意识体（排除自己）
+            check_query = select(Mind).where(
+                Mind.user_id == user_id,
+                Mind.name == params.name,
+                Mind.id != mind_id
+            )
+            check_result = await self.db.execute(check_query)
+            if check_result.scalar_one_or_none():
+                raise UnicornException(code=400, errmsg=f"意识体 '{params.name}' 已存在")
+
+            # 重命名文件
+            old_file_path = os.path.join(self.minds_dir, mind.filename)
+            new_filename = self._generate_filename(params.name)
+            new_file_path = os.path.join(self.minds_dir, new_filename)
+
+            if os.path.exists(old_file_path):
+                os.rename(old_file_path, new_file_path)
+
+            mind.name = params.name
+            mind.filename = new_filename
+
+        if params.birth is not None:
+            mind.birth = params.birth
+
+        if params.mind_content is not None:
+            # 保存文件内容
+            file_path = os.path.join(self.minds_dir, mind.filename)
+            try:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(params.mind_content)
+            except Exception as e:
+                raise UnicornException(code=500, errmsg=f"保存文件失败: {str(e)}")
+
+            mind.content = params.mind_content
+
+            # 尝试重新上传音频到SiliconFlow获取voice_id
+            try:
+                voice_base64, voice_reference_text = self._extract_voice_from_mind_content(params.mind_content)
+
+                if voice_base64:
+                    from api.endpoints.ai.service import AIService
+                    ai_service = AIService()
+
+                    # 使用 user_id 作为 customName，符合 SiliconFlow 的命名规则（只允许字母数字_-）
+                    voice_id = await ai_service.upload_voice_to_siliconflow(
+                        voice_base64,
+                        filename=f"voice_{user_id}.mp3",
+                        custom_name=f"voice_{user_id}",
+                        text=voice_reference_text
+                    )
+
+                    if voice_id:
+                        mind.voice_id = voice_id
+            except Exception as e:
+                # 上传失败不影响意识体更新，只记录错误
+                import traceback
+                traceback.print_exc()
+
+            # 同步数据到 user_profiles 表
+            await self._sync_to_user_profile(user_id, params.mind_content)
+
+        await self.db.flush()
+        await self.db.refresh(mind)
+
+        print(f"✅ 意识体更新完成，mind.id={mind.id}, mind.voice_id={mind.voice_id}")
+
+        return UpdateMindResponseSchema(
+            mind_id=mind.id,
+            filename=mind.filename,
+            updated=datetime.now()
+        )
+
+    def _extract_voice_from_mind_content(self, mind_content: str) -> tuple:
+        """从mind_content中提取voice_prompt和voice_reference_text
+
+        Returns:
+            tuple: (voice_prompt, voice_reference_text)
+        """
         try:
             # mind_content格式: export default {...}
             # 去除 "export default " 前缀
@@ -157,13 +246,16 @@ class MindService:
             # 解析JSON
             mind_data = json.loads(json_str)
 
-            # 提取voice_prompt
+            # 提取voice_prompt（音频base64数据）
             voice_prompt = mind_data.get('metadata', {}).get('voice_prompt', '')
+            # 提取voice_reference_text（参考文本）
+            voice_reference_text = mind_data.get('metadata', {}).get('voice_reference_text', '')
 
-            return voice_prompt if voice_prompt else None
+            return (voice_prompt if voice_prompt else None, voice_reference_text if voice_reference_text else None)
         except Exception as e:
-            print(f"⚠️ 解析mind_content提取voice失败: {str(e)}")
-            return None
+            import traceback
+            traceback.print_exc()
+            return (None, None)
 
     async def get_mind_list(self, params: ListMindParams) -> MindListResponseSchema:
         """获取意识体列表"""
@@ -274,8 +366,9 @@ class MindService:
     async def _sync_to_user_profile(self, user_id: str, mind_content: str):
         """同步 mind 数据到 user_profiles 表"""
         try:
-            # 解析 mind 内容 (JSON 格式)
-            mind_data = json.loads(mind_content)
+            # 解析 mind 内容 (格式: export default {...})
+            json_str = mind_content.replace('export default ', '').strip()
+            mind_data = json.loads(json_str)
 
             # 提取基本信息
             metadata = mind_data.get('metadata', {})
@@ -325,7 +418,8 @@ class MindService:
                     "birth": birth
                 })
 
-            await self.db.commit()
+            # 注意：不在这里 commit，让外层的 get_db() 统一管理事务
+            # 这样可以避免嵌套事务导致的 rollback 问题
 
         except json.JSONDecodeError:
             # 如果 mind_content 不是有效的 JSON,忽略同步
@@ -349,9 +443,11 @@ class MindService:
             from api.endpoints.ai.service import AIService
             ai_service = AIService()
 
+            # 使用 user_id 作为 customName，符合 SiliconFlow 的命名规则（只允许字母数字_-）
             voice_id = await ai_service.upload_voice_to_siliconflow(
                 voice_base64,
-                filename=f"{mind.name}_voice.wav"
+                filename=f"voice_{user_id}.wav",
+                custom_name=f"voice_{user_id}"
             )
 
             if voice_id:

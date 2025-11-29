@@ -50,3 +50,10 @@ class MindContentResponseSchema(BaseModel):
     """意识体内容响应模式"""
     filename: str
     content: str
+
+
+class UpdateMindResponseSchema(BaseModel):
+    """更新意识体响应模式"""
+    mind_id: str
+    filename: str
+    updated: datetime

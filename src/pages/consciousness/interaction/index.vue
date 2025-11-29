@@ -18,14 +18,27 @@
           <text class="voice-icon">{{ voiceEnabled ? '🔊' : '🔇' }}</text>
           <text class="voice-text">{{ voiceEnabled ? 'VOICE ON' : 'VOICE OFF' }}</text>
         </view>
-        <!-- 音色选择器（仅在语音开启且无自定义voice_id时显示） -->
-        <view class="voice-selector" v-if="voiceEnabled && !currentVoiceId">
-          <picker :range="voiceOptions" range-key="label" :value="selectedVoiceIndex" @change="onVoiceChange">
-            <view class="voice-picker">
-              <text class="voice-picker-icon">🎙️</text>
-              <text class="voice-picker-text">{{ voiceOptions[selectedVoiceIndex].label }}</text>
+        <!-- 自定义音色选择器：终端风格 -->
+        <view class="voice-selector" v-if="voiceEnabled">
+          <view class="voice-picker"
+                :class="{ 'user-voice': selectedVoiceIndex === 0 && currentVoiceId, 'active': voiceSelectorOpen }"
+                @click="toggleVoiceSelector">
+            <text class="voice-picker-icon">🎙️</text>
+            <text class="voice-picker-text">{{ voiceOptions[selectedVoiceIndex].label }}</text>
+            <text class="voice-picker-arrow">{{ voiceSelectorOpen ? '▲' : '▼' }}</text>
+          </view>
+
+          <!-- 下拉选项列表 -->
+          <view class="voice-options" v-if="voiceSelectorOpen">
+            <view class="voice-option"
+                  v-for="(option, index) in voiceOptions"
+                  :key="index"
+                  :class="{ 'selected': index === selectedVoiceIndex, 'default-voice': index === 0 && currentVoiceId }"
+                  @click="selectVoice(index)">
+              <text class="option-text">{{ option.label }}</text>
+              <text class="option-check" v-if="index === selectedVoiceIndex">✓</text>
             </view>
-          </picker>
+          </view>
         </view>
         <text>{{ currentTime }}</text>
       </view>
@@ -153,17 +166,19 @@ export default {
       ragEnabled: true,     // RAG知识增强开关（默认开启）
       currentVoiceId: null,  // 当前意识体的voice_id
       audioPlayer: null,  // 音频播放器
-      // 系统预置音色选项
-      selectedVoiceIndex: 6,  // 默认选择 claire（温柔女声）
+      voiceSelectorOpen: false,  // 音色选择器展开状态
+      // 系统预置音色选项（第一项为默认音色）
+      selectedVoiceIndex: 0,  // 默认选择第0项（默认音色）
       voiceOptions: [
-        { value: 'alex', label: '沉稳男声' },
-        { value: 'benjamin', label: '低沉男声' },
-        { value: 'charles', label: '磁性男声' },
-        { value: 'david', label: '欢快男声' },
-        { value: 'anna', label: '沉稳女声' },
-        { value: 'bella', label: '激情女声' },
-        { value: 'claire', label: '温柔女声' },
-        { value: 'diana', label: '欢快女声' }
+        { value: 'default', label: '默认音色' },  // 第0项：默认音色（有用户音色用用户的，没有用claire）
+        { value: 'alex', label: 'Alex - 沉稳男声' },
+        { value: 'benjamin', label: 'Benjamin - 低沉男声' },
+        { value: 'charles', label: 'Charles - 磁性男声' },
+        { value: 'david', label: 'David - 欢快男声' },
+        { value: 'anna', label: 'Anna - 沉稳女声' },
+        { value: 'bella', label: 'Bella - 激情女声' },
+        { value: 'claire', label: 'Claire - 温柔女声' },
+        { value: 'diana', label: 'Diana - 欢快女声' }
       ],
       emotionSoundConfig: {
         happy: {
@@ -936,15 +951,23 @@ export default {
       this.scrollToBottom()
     },
 
-    onVoiceChange(e) {
-      this.selectedVoiceIndex = e.detail.value
-      const selectedVoice = this.voiceOptions[this.selectedVoiceIndex]
+    // 切换音色选择器展开/收起
+    toggleVoiceSelector() {
+      this.voiceSelectorOpen = !this.voiceSelectorOpen
+    },
+
+    // 选择音色
+    selectVoice(index) {
+      this.selectedVoiceIndex = index
+      this.voiceSelectorOpen = false  // 选择后关闭
+      const selectedVoice = this.voiceOptions[index]
       this.messages.push({
         type: 'system',
         content: `[SYSTEM] Voice changed to: ${selectedVoice.label}`,
         timestamp: new Date().toLocaleTimeString()
       })
       this.scrollToBottom()
+      console.log('切换音色:', selectedVoice)
     },
 
     async playVoiceResponse(text) {
@@ -960,12 +983,22 @@ export default {
           speed: 1.0
         }
 
-        // 如果有voice_id，使用用户自定义音色
-        // 否则使用选中的系统预置音色
-        if (this.currentVoiceId) {
-          params.voice_id = this.currentVoiceId
+        // 音色选择逻辑：
+        // 1. 如果选择了第0项（默认音色）
+        //    - 有voice_id：使用用户音色
+        //    - 没有voice_id：使用系统默认的claire
+        // 2. 如果选择了其他项：使用对应的系统预置音色
+        if (this.selectedVoiceIndex === 0) {
+          // 默认音色
+          if (this.currentVoiceId) {
+            // 有用户音色，使用用户的
+            params.voice_id = this.currentVoiceId
+          } else {
+            // 没有用户音色，使用系统默认的claire
+            params.preset_voice = 'claire'
+          }
         } else {
-          // 传递系统预置音色（格式：模型名:音色名，由后端处理）
+          // 使用选中的系统预置音色
           params.preset_voice = this.voiceOptions[this.selectedVoiceIndex].value
         }
 
@@ -1043,7 +1076,16 @@ export default {
           const mindInfo = response.data.data
           if (mindInfo.voice_id) {
             this.currentVoiceId = mindInfo.voice_id
+            // 如果有用户音色，默认选择第0项（用户音色）
+            this.selectedVoiceIndex = 0
             console.log('已获取voice_id:', this.currentVoiceId)
+
+            // 添加系统消息提示
+            this.messages.push({
+              type: 'system',
+              content: '[SYSTEM] Custom voice detected, default voice will use user voice',
+              timestamp: new Date().toLocaleTimeString()
+            })
           }
         }
       } catch (error) {
@@ -1408,6 +1450,7 @@ export default {
 }
 
 .voice-selector {
+  position: relative;
   display: flex;
   align-items: center;
 }
@@ -1415,28 +1458,162 @@ export default {
 .voice-picker {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
-  background: rgba(0, 255, 0, 0.1);
-  border: 1px solid #0f0;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(0, 255, 0, 0.4);
   border-radius: 3px;
   cursor: pointer;
   transition: all 0.3s ease;
+  min-width: 150px;
+  justify-content: space-between;
 
   &:hover {
-    background: rgba(0, 255, 0, 0.2);
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    background: rgba(0, 255, 0, 0.1);
+    border-color: #0f0;
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+  }
+
+  &.active {
+    border-color: #0f0;
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+  }
+
+  // 当选择默认音色且有用户音色时，使用金色高亮
+  &.user-voice {
+    border-color: rgba(255, 215, 0, 0.5);
+
+    .voice-picker-text {
+      color: #ffd700;
+      text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+    }
+
+    &:hover, &.active {
+      border-color: #ffd700;
+      box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+    }
   }
 }
 
 .voice-picker-icon {
-  font-size: 16px;
+  font-size: 14px;
+  filter: drop-shadow(0 0 2px currentColor);
 }
 
 .voice-picker-text {
+  flex: 1;
   color: #0f0;
   font-family: 'Courier New', Courier, monospace;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: bold;
+  letter-spacing: 0.3px;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+.voice-picker-arrow {
+  color: #0f0;
+  font-size: 10px;
+  opacity: 0.7;
+  transition: transform 0.3s ease;
+}
+
+// 下拉选项列表
+.voice-options {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid #0f0;
+  border-radius: 3px;
+  box-shadow: 0 4px 12px rgba(0, 255, 0, 0.3);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+  animation: slideDown 0.2s ease;
+
+  // 滚动条样式
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 0, 0.3);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(0, 255, 0, 0.5);
+    }
+  }
+}
+
+.voice-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid rgba(0, 255, 0, 0.1);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: rgba(0, 255, 0, 0.15);
+  }
+
+  &.selected {
+    background: rgba(0, 255, 0, 0.1);
+  }
+
+  // 默认音色（有用户音色时）
+  &.default-voice {
+    border-bottom-color: rgba(255, 215, 0, 0.2);
+
+    .option-text {
+      color: #ffd700;
+      text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+    }
+
+    &:hover {
+      background: rgba(255, 215, 0, 0.15);
+    }
+
+    &.selected {
+      background: rgba(255, 215, 0, 0.1);
+    }
+  }
+
+  .option-text {
+    color: #0f0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 0.3px;
+    text-shadow: 0 0 3px rgba(0, 255, 0, 0.5);
+  }
+
+  .option-check {
+    color: #0f0;
+    font-size: 12px;
+    font-weight: bold;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

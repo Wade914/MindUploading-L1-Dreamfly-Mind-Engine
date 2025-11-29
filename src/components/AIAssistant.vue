@@ -179,7 +179,7 @@ const sendMessage = async () => {
     }
 
     // 发起流式请求
-    const response = await fetch('http://localhost:8000/api/ai/coze/chat', {
+    const response = await fetch(`${__API_BASE_URL__}/api/ai/coze/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

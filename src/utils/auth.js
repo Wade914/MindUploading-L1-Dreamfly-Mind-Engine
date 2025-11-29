@@ -151,7 +151,7 @@ class AuthManager {
     return new Promise((resolve) => {
       // 注册请求不需要token，直接使用uni.request
       uni.request({
-        url: 'http://localhost:8000/api/register',
+        url: `${__API_BASE_URL__}/api/register`,
         method: 'POST',
         header: {
           'Content-Type': 'application/json'

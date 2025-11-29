@@ -76,14 +76,24 @@
     <!-- 中间内容区 -->
     <view class="main-content">
       <view class="content-header">
-        <text
-          class="consciousness-status"
-          :class="{ 'dormant-clickable': status === '休眠' }"
-          @click="status === '休眠' ? goToCreateMind() : null"
-        >
-          意识体状态：{{ status }}
-        </text>
-        <text class="last-sync" v-if="status === '活跃'">上次同步：{{ lastSyncTime }}</text>
+        <view class="status-row">
+          <text
+            class="consciousness-status"
+            :class="{ 'dormant-clickable': status === '休眠' }"
+            @click="status === '休眠' ? goToCreateMind() : null"
+          >
+            意识体状态：{{ status }}
+          </text>
+          <button
+            v-if="status === '活跃' && currentMind"
+            class="edit-mind-btn"
+            @click="goToEditMind"
+          >
+            <text class="iconfont icon-edit"></text>
+            <text>编辑</text>
+          </button>
+          <text class="last-sync" v-if="status === '活跃'">上次同步：{{ lastSyncTime }}</text>
+        </view>
       </view>
       
       <!-- 动态内容区，根据currentModule显示不同内容 -->
@@ -147,6 +157,7 @@ export default {
       currentModule: 'knowledge',
       isModuleChanging: false,
       dashboardStats: {},
+      currentMind: null,  // 当前意识体信息
       modal: {
         visible: false,
         title: '',
@@ -324,13 +335,16 @@ export default {
           if (mindData.items && mindData.items.length > 0) {
             // 用户有意识体文件
             this.status = '活跃'
+            this.currentMind = mindData.items[0]  // 保存当前意识体信息
           } else {
             // 用户没有意识体文件
             this.status = '休眠'
+            this.currentMind = null
           }
         } else {
           // API调用失败，默认为休眠状态
           this.status = '休眠'
+          this.currentMind = null
           console.warn('查询意识体状态失败，默认为休眠状态')
         }
       } catch (error) {
@@ -344,6 +358,15 @@ export default {
       uni.navigateTo({
         url: '/pages/upload/minddata'
       })
+    },
+
+    // 跳转到编辑意识体页面
+    goToEditMind() {
+      if (this.currentMind && this.currentMind.id) {
+        uni.navigateTo({
+          url: `/pages/upload/minddata?mode=edit&mind_id=${this.currentMind.id}&filename=${encodeURIComponent(this.currentMind.filename)}`
+        })
+      }
     },
 
     // 手动刷新统计数据
@@ -595,13 +618,18 @@ export default {
   padding: 30px;
   
   .content-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     margin-bottom: 30px;
-    
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: nowrap;
+    }
+
     .consciousness-status {
       font-size: 16px;
+      flex-shrink: 0;
 
       &::before {
         content: "";
@@ -628,10 +656,45 @@ export default {
         }
       }
     }
-    
+
+    .edit-mind-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 6px 12px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+      line-height: 1;
+      margin-left: 4px;
+
+      .iconfont {
+        font-size: 12px;
+        line-height: 1;
+      }
+
+      text {
+        line-height: 1;
+      }
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.4);
+        color: #fff;
+      }
+    }
+
     .last-sync {
       font-size: 14px;
       color: rgba(255, 255, 255, 0.6);
+      flex-shrink: 0;
+      margin-left: 12px;
     }
   }
   

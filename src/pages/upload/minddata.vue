@@ -180,6 +180,7 @@
 
 <script>
 import AIAssistant from '@/components/AIAssistant.vue'
+import { get } from '@/utils/request.js'
 
 export default {
   components: {
@@ -188,6 +189,9 @@ export default {
   data() {
     return {
       currentPage: 1,
+      isEditMode: false,  // 是否为编辑模式
+      mindId: null,       // 编辑时的意识体ID
+      mindFilename: null, // 编辑时的文件名
       formData: {
         basicInfo: {
           name: '',
@@ -210,7 +214,112 @@ export default {
     }
   },
 
+  onLoad(options) {
+    // 检查是否为编辑模式
+    if (options.mode === 'edit' && options.mind_id) {
+      this.isEditMode = true
+      this.mindId = options.mind_id
+      this.mindFilename = options.filename ? decodeURIComponent(options.filename) : null
+      this.loadMindData()
+    }
+  },
+
   methods: {
+    async loadMindData() {
+      // 加载现有意识体数据
+      if (!this.mindFilename) {
+        uni.showToast({
+          title: '无法加载意识体数据',
+          icon: 'none'
+        })
+        return
+      }
+
+      uni.showLoading({ title: '加载中...' })
+
+      try {
+        const response = await get(`/api/mind/${encodeURIComponent(this.mindFilename)}`)
+
+        if (response && response.data && response.data.code === 200) {
+          const mindContent = response.data.data
+
+          // 解析 mind 文件内容
+          const jsonStr = mindContent.replace('export default ', '').trim()
+          const mindData = JSON.parse(jsonStr)
+
+          // 填充表单数据
+          const metadata = mindData.metadata || {}
+          const memory = mindData.memory || {}
+
+          this.formData.basicInfo.name = metadata.name || ''
+          this.formData.basicInfo.birth = metadata.birth || ''
+          this.formData.basicInfo.occupation = metadata.occupation || ''
+          this.formData.basicInfo.email = metadata.email || ''
+
+          // 解析 personality_prompt
+          const personalityPrompt = metadata.personality_prompt || ''
+          // 提取自我描述（去除前缀）
+          const selfDescMatch = personalityPrompt.match(/你现在是.*?的数字意识体。(.*)/)
+          this.formData.personality.selfDescription = selfDescMatch ? selfDescMatch[1] : personalityPrompt
+
+          this.formData.personality.essence = memory.self_cognition || ''
+
+          // 解析记忆片段
+          const fragments = memory.memory_fragments || []
+          for (let i = 0; i < Math.min(fragments.length, 5); i++) {
+            const fragment = fragments[i]
+            if (fragment) {
+              this.formData.moments[i].time = fragment.time || ''
+              // 尝试从 content 中提取 location 和 description
+              const content = fragment.content || ''
+              const locationMatch = content.match(/在(.+?)，(.*)/)
+              if (locationMatch) {
+                this.formData.moments[i].location = locationMatch[1]
+                this.formData.moments[i].description = locationMatch[2]
+              } else {
+                this.formData.moments[i].description = content
+              }
+            }
+          }
+
+          // 保存原始的 voice_prompt 和 image_data（编辑时需要保留）
+          if (!getApp().globalData) {
+            getApp().globalData = {}
+          }
+          if (!getApp().globalData.uploadData) {
+            getApp().globalData.uploadData = {}
+          }
+
+          // 标记为编辑模式，保存原始数据
+          getApp().globalData.uploadData.isEditMode = true
+          getApp().globalData.uploadData.mindId = this.mindId
+          getApp().globalData.uploadData.originalVoicePrompt = metadata.voice_prompt || null
+          getApp().globalData.uploadData.originalVoiceReferenceText = metadata.voice_reference_text || null
+          getApp().globalData.uploadData.originalImageData = metadata.image_data || null
+
+          // 保存 physical_info（身高体重）
+          const physicalInfo = metadata.physical_info || {}
+          getApp().globalData.uploadData.originalHeight = physicalInfo.height || ''
+          getApp().globalData.uploadData.originalWeight = physicalInfo.weight || ''
+
+          uni.hideLoading()
+          uni.showToast({
+            title: '数据加载成功',
+            icon: 'success'
+          })
+        } else {
+          throw new Error('获取意识体数据失败')
+        }
+      } catch (error) {
+        uni.hideLoading()
+        console.error('加载意识体数据失败:', error)
+        uni.showToast({
+          title: '加载失败: ' + error.message,
+          icon: 'none'
+        })
+      }
+    },
+
     getMomentTitle(index) {
       const titles = [
         {
@@ -265,11 +374,19 @@ export default {
         return
       }
 
-      // 打印调试信息
-      console.log('提交的表单数据:', this.formData)
+
+
+      // 确保globalData存在
+      if (!getApp().globalData) {
+        getApp().globalData = {}
+      }
+
+      // 保留编辑模式的原始数据
+      const existingData = getApp().globalData.uploadData || {}
 
       // 保存到全局状态
       const uploadData = {
+        ...existingData,  // 保留原有数据（如编辑模式下的 voice/image）
         name: this.formData.basicInfo.name,
         birth: this.formData.basicInfo.birth,
         occupation: this.formData.basicInfo.occupation,
@@ -279,22 +396,19 @@ export default {
         memories: this.formData.moments.map(moment => ({
           time: moment.time,
           content: `在${moment.location || '某处'}，${moment.description}`
-        })).filter(m => m.time && m.content)
+        })).filter(m => m.time && m.content),
+        // 编辑模式相关
+        isEditMode: this.isEditMode,
+        mindId: this.mindId
       }
 
-      console.log('保存到全局状态的数据:', uploadData)
-      
-      // 确保globalData存在
-      if (!getApp().globalData) {
-        getApp().globalData = {}
-      }
       getApp().globalData.uploadData = uploadData
 
       uni.showToast({
         title: '提交成功',
         icon: 'success'
       })
-      
+
       // 跳转到音色上传页面
       setTimeout(() => {
         uni.navigateTo({

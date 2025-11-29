@@ -221,32 +221,54 @@ class AIService:
             "model": params.voice,
             "input": params.text,
             "voice": voice_to_use,  # 使用voice_id或系统预置音色
-            "speed": params.speed
+            "speed": params.speed,
+            "response_format": "mp3"
         }
 
+        request_url = f"{self.siliconflow_base_url}/audio/speech"
+        print(f"\n{'='*60}")
+        print(f"🔊 TTS 请求详情:")
+        print(f"  URL: {request_url}")
+        print(f"  Headers: Authorization: Bearer sk-***{self.siliconflow_api_key[-8:]}")
+        print(f"  Body: {json.dumps(request_data, ensure_ascii=False, indent=4)}")
+        print(f"{'='*60}\n")
+
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{self.siliconflow_base_url}/audio/speech",
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                # 使用流式请求读取响应
+                async with client.stream(
+                    'POST',
+                    request_url,
                     headers=headers,
-                    json=request_data,
-                    timeout=60.0
-                )
+                    json=request_data
+                ) as response:
+                    print(f"\n{'='*60}")
+                    print(f"🔊 TTS 响应详情:")
+                    print(f"  Status Code: {response.status_code}")
+                    print(f"  Headers: {dict(response.headers)}")
 
-                if response.status_code != 200:
-                    error_text = response.text
-                    raise UnicornException(
-                        code=response.status_code,
-                        errmsg=f"语音服务调用失败: {error_text}"
+                    if response.status_code != 200:
+                        error_text = await response.aread()
+                        print(f"  Body: {error_text.decode('utf-8')}")
+                        print(f"{'='*60}\n")
+                        raise UnicornException(
+                            code=response.status_code,
+                            errmsg=f"语音服务调用失败: {error_text.decode('utf-8')}"
+                        )
+
+                    # 流式读取所有数据
+                    audio_chunks = []
+                    async for chunk in response.aiter_bytes():
+                        audio_chunks.append(chunk)
+
+                    audio_data = b''.join(audio_chunks)
+                    print(f"  Body: [音频数据，长度: {len(audio_data)} 字节]")
+                    print(f"{'='*60}\n")
+
+                    return VoiceResponseSchema(
+                        audio_data=audio_data.hex() if audio_data else None,
+                        format="mp3"
                     )
-
-                # 返回音频数据
-                audio_data = response.content
-
-                return VoiceResponseSchema(
-                    audio_data=audio_data.hex() if audio_data else None,
-                    format="wav"
-                )
 
         except UnicornException:
             raise
@@ -258,13 +280,15 @@ class AIService:
             traceback.print_exc()
             raise UnicornException(code=500, errmsg=f"语音服务异常: {str(e)}")
 
-    async def upload_voice_to_siliconflow(self, voice_base64: str, filename: str = "voice.wav") -> Optional[str]:
+    async def upload_voice_to_siliconflow(self, voice_base64: str, filename: str = "voice.wav", custom_name: str = None, text: str = None) -> Optional[str]:
         """
         上传音频到SiliconFlow获取voice_id
 
         Args:
             voice_base64: base64编码的音频数据
             filename: 文件名
+            custom_name: 自定义音色名称
+            text: 参考音频的文字内容
 
         Returns:
             voice_id: SiliconFlow返回的音色ID，失败返回None
@@ -278,7 +302,7 @@ class AIService:
             audio_data = base64.b64decode(voice_base64)
 
             # 创建临时文件
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
                 temp_file.write(audio_data)
                 temp_file_path = temp_file.name
 
@@ -288,31 +312,33 @@ class AIService:
                     "Authorization": f"Bearer {self.siliconflow_api_key}"
                 }
 
-                # 使用multipart/form-data上传
+                # 使用multipart/form-data上传，添加必需的参数
                 async with httpx.AsyncClient(timeout=60.0) as client:
                     with open(temp_file_path, 'rb') as f:
-                        files = {'file': (filename, f, 'audio/wav')}
+                        files = {'file': (filename, f, 'audio/mpeg')}
+                        # 默认参考文本（用于语音克隆）- 如果用户未提供则使用默认
+                        default_text = '从前，庄周梦见自己变成了蝴蝶，一只翩翩起舞的蝴蝶。他十分惬意舒畅，悠然自得，根本不知道自己原本是庄周。突然梦醒，他才惊觉自己分明是庄周。可他却疑惑起来，不知是庄周做梦变成了蝴蝶呢，还是蝴蝶做梦变成了庄周？'
+
+                        data = {
+                            'model': 'FunAudioLLM/CosyVoice2-0.5B',
+                            'customName': custom_name or filename.replace('.mp3', '').replace('.wav', ''),
+                            'text': text or default_text
+                        }
+
                         response = await client.post(
                             f"{self.siliconflow_base_url}/uploads/audio/voice",
                             headers=headers,
-                            files=files
+                            files=files,
+                            data=data
                         )
 
                     if response.status_code == 200:
                         result = response.json()
-                        # 根据SiliconFlow API返回格式提取voice_id
-                        # 假设返回格式为 {"voice_id": "xxx"} 或 {"data": {"voice_id": "xxx"}}
-                        voice_id = result.get('voice_id') or result.get('data', {}).get('voice_id')
-
-                        if voice_id:
-                            print(f"✅ 音频上传成功，voice_id: {voice_id}")
-                            return voice_id
-                        else:
-                            print(f"⚠️ 音频上传成功但未返回voice_id，响应: {result}")
-                            return None
+                        # SiliconFlow API 返回格式: {"uri": "speech:default:xxx:yyy"}
+                        # uri 就是 voice_id
+                        voice_id = result.get('uri') or result.get('voice_id') or result.get('data', {}).get('voice_id')
+                        return voice_id if voice_id else None
                     else:
-                        error_text = response.text
-                        print(f"❌ 音频上传失败: {response.status_code} - {error_text}")
                         return None
 
             finally:
@@ -321,7 +347,8 @@ class AIService:
                     os.unlink(temp_file_path)
 
         except Exception as e:
-            print(f"❌ 上传音频到SiliconFlow异常: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return None
 
     async def coze_chat_stream(self, params: CozeChatParams) -> AsyncGenerator[str, None]:

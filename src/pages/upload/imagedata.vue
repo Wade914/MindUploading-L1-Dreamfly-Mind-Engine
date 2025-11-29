@@ -127,13 +127,38 @@ export default {
       imageFile: null,
       height: '',
       weight: '',
-      cameraContext: null
+      cameraContext: null,
+      isEditMode: false,
+      hasOriginalImage: false
+    }
+  },
+
+  mounted() {
+    // 检查是否为编辑模式
+    const uploadData = getApp().globalData?.uploadData || {}
+    if (uploadData.isEditMode) {
+      this.isEditMode = true
+      // 检查是否有原始图片
+      if (uploadData.originalImageData) {
+        this.hasOriginalImage = true
+        // 显示原始图片预览
+        this.imageUrl = uploadData.originalImageData
+      }
+      // 加载原始身高体重
+      if (uploadData.originalHeight) {
+        this.height = String(uploadData.originalHeight)
+      }
+      if (uploadData.originalWeight) {
+        this.weight = String(uploadData.originalWeight)
+      }
     }
   },
 
   computed: {
     isFormValid() {
-      return this.imageUrl && this.height && this.weight
+      // 编辑模式下，如果有原始图片也算有效
+      const hasImage = this.imageUrl || (this.isEditMode && this.hasOriginalImage)
+      return hasImage && this.height && this.weight
     }
   },
 
@@ -240,13 +265,6 @@ export default {
     },
 
     async uploadData() {
-      console.log('uploadData 被调用')
-      console.log('表单验证状态:', this.isFormValid)
-      console.log('当前数据:', {
-        imageUrl: this.imageUrl,
-        height: this.height,
-        weight: this.weight
-      })
 
       if (!this.isFormValid) {
         uni.showToast({
@@ -271,16 +289,16 @@ export default {
         }
 
         // 保存图片和身体数据到全局状态
-        getApp().globalData.uploadData.imageUrl = this.imageUrl
-        getApp().globalData.uploadData.imageFile = this.imageFile
+        // 如果有新图片，使用新图片；否则在编辑模式下保留原始图片
+        if (this.imageFile) {
+          getApp().globalData.uploadData.imageUrl = this.imageUrl
+          getApp().globalData.uploadData.imageFile = this.imageFile
+          // 清除原始图片标记
+          delete getApp().globalData.uploadData.originalImageData
+        }
+
         getApp().globalData.uploadData.height = this.height
         getApp().globalData.uploadData.weight = this.weight
-
-        console.log('保存的数据:', {
-          imageUrl: this.imageUrl,
-          height: this.height,
-          weight: this.weight
-        })
 
         uni.hideLoading()
         uni.showToast({

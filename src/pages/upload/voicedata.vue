@@ -33,10 +33,16 @@
             </view>
 
             <view class="guide-item">
-              <text class="guide-title">朗读文本</text>
-              <view class="reading-text">
-                <text class="text-content">从前，庄周梦见自己变成了蝴蝶，一只翩翩起舞的蝴蝶。他十分惬意舒畅，悠然自得，根本不知道自己原本是庄周。突然梦醒，他才惊觉自己分明是庄周。可他却疑惑起来，不知是庄周做梦变成了蝴蝶呢，还是蝴蝶做梦变成了庄周？</text>
+              <text class="guide-title">朗读文本 <text class="hint-text">（请朗读以下文字，或修改为您实际朗读的内容）</text></text>
+              <view class="reading-text editable">
+                <textarea
+                  class="text-input"
+                  v-model="voiceReferenceText"
+                  placeholder="请输入您录音时朗读的文字内容，这将用于语音克隆"
+                  :maxlength="500"
+                ></textarea>
               </view>
+              <text class="char-count">{{ voiceReferenceText.length }}/500</text>
             </view>
 
             <view class="guide-item">
@@ -149,7 +155,27 @@ export default {
       duration: 0,
       audioUrl: null,
       recorder: null,
-      chunks: []
+      chunks: [],
+      // 语音参考文本（用于语音克隆）
+      voiceReferenceText: '从前，庄周梦见自己变成了蝴蝶，一只翩翩起舞的蝴蝶。他十分惬意舒畅，悠然自得，根本不知道自己原本是庄周。突然梦醒，他才惊觉自己分明是庄周。可他却疑惑起来，不知是庄周做梦变成了蝴蝶呢，还是蝴蝶做梦变成了庄周？',
+      isEditMode: false,
+      hasOriginalVoice: false
+    }
+  },
+
+  mounted() {
+    // 检查是否为编辑模式
+    const uploadData = getApp().globalData?.uploadData || {}
+    if (uploadData.isEditMode) {
+      this.isEditMode = true
+      // 检查是否有原始音频
+      if (uploadData.originalVoicePrompt) {
+        this.hasOriginalVoice = true
+      }
+      // 加载原始参考文本
+      if (uploadData.originalVoiceReferenceText) {
+        this.voiceReferenceText = uploadData.originalVoiceReferenceText
+      }
     }
   },
 
@@ -334,6 +360,21 @@ export default {
     },
 
     async uploadRecording() {
+      // 编辑模式下，如果没有新录音但有原始音频，可以跳过
+      if (!this.recordingFile && this.isEditMode && this.hasOriginalVoice) {
+        // 保留原始音频数据，直接跳转
+        uni.showToast({
+          title: '保留原有音频',
+          icon: 'success'
+        })
+        setTimeout(() => {
+          uni.navigateTo({
+            url: '/pages/upload/imagedata'
+          })
+        }, 1500)
+        return
+      }
+
       if (!this.recordingFile) {
         uni.showToast({
           title: '请先录制或上传音频',
@@ -360,8 +401,12 @@ export default {
           getApp().globalData.uploadData = {}
         }
 
-        // 保存音频文件到全局状态
+        // 保存音频文件和参考文本到全局状态
         getApp().globalData.uploadData.voiceFile = this.recordingFile
+        getApp().globalData.uploadData.voiceReferenceText = this.voiceReferenceText
+        // 清除原始音频标记（因为有新录音了）
+        delete getApp().globalData.uploadData.originalVoicePrompt
+        delete getApp().globalData.uploadData.originalVoiceReferenceText
 
         uni.hideLoading()
         uni.showToast({
@@ -522,6 +567,42 @@ $bg-gray: rgba(255, 255, 255, 0.08);
               line-height: 1.8;
               letter-spacing: 0.5px;
             }
+
+            &.editable {
+              padding: 0;
+              overflow: hidden;
+
+              .text-input {
+                width: 100%;
+                min-height: 120px;
+                padding: 16px;
+                font-size: 16px;
+                color: $text-white;
+                line-height: 1.8;
+                letter-spacing: 0.5px;
+                background: transparent;
+                border: none;
+                resize: none;
+
+                &::placeholder {
+                  color: rgba(255, 255, 255, 0.4);
+                }
+              }
+            }
+          }
+
+          .hint-text {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: normal;
+          }
+
+          .char-count {
+            display: block;
+            text-align: right;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 8px;
           }
         }
       }

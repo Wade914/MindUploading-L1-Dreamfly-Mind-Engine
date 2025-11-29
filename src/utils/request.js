@@ -108,10 +108,16 @@ export function get(url, params = {}, options = {}) {
  * @returns {Promise} 请求结果
  */
 export function post(url, data = {}, options = {}) {
-  // 如果是创建意识体的请求，增加超时时间（因为包含大量base64数据）
-  const timeout = url.includes('/api/mind') && !url.includes('/api/minds')
-    ? 60000  // 60秒
-    : 10000  // 默认10秒
+  // 根据不同接口设置超时时间
+  let timeout = 10000 // 默认10秒
+
+  if (url.includes('/api/mind') && !url.includes('/api/minds')) {
+    // 创建意识体的请求（包含大量base64数据）
+    timeout = 60000  // 60秒
+  } else if (url.includes('/api/ai/audio/speech') || url.includes('/api/ai/chat')) {
+    // AI语音生成和对话请求（可能需要较长处理时间）
+    timeout = 45000  // 45秒
+  }
 
   return apiRequest({
     url,
@@ -130,10 +136,19 @@ export function post(url, data = {}, options = {}) {
  * @returns {Promise} 请求结果
  */
 export function put(url, data = {}, options = {}) {
+  // 根据不同接口设置超时时间
+  let timeout = 10000 // 默认10秒
+
+  if (url.includes('/api/mind/')) {
+    // 更新意识体的请求（包含大量base64数据）
+    timeout = 180000 // 3分钟
+  }
+
   return apiRequest({
     url,
     method: 'PUT',
     data,
+    timeout,
     ...options
   })
 }

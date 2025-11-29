@@ -70,6 +70,20 @@
 
 <script>
 export default {
+  data() {
+    return {
+      isSaved: false,        // 是否已保存到后端
+      mindData: null,        // 生成的mind数据
+      fileContent: null,     // 文件内容
+      fileName: null         // 文件名
+    }
+  },
+
+  mounted() {
+    // 页面加载时自动保存
+    this.autoSaveMind()
+  },
+
   methods: {
     // 将文件转换为base64
     async fileToBase64(file) {
@@ -93,7 +107,8 @@ export default {
       }
     },
 
-    async downloadMindCopy() {
+    // 自动保存mind文件到后端
+    async autoSaveMind() {
       uni.showLoading({
         title: '正在生成意识体文件...'
       })
@@ -101,50 +116,50 @@ export default {
       try {
         // 从全局状态获取用户上传的数据
         const uploadData = getApp().globalData.uploadData || {}
-        
-        console.log('准备生成意识体文件，当前数据:', {
-          name: uploadData.name,
-          birth: uploadData.birth,
-          voiceFile: !!uploadData.voiceFile,
-          imageUrl: !!uploadData.imageUrl,
-          height: uploadData.height,
-          weight: uploadData.weight
-        })
-        
+
         // 检查必要数据
         if (!uploadData.name || !uploadData.birth) {
           throw new Error('缺少必要的个人信息')
         }
 
         // 转换音频和图片为base64
-        let voiceBase64 = 'base64_encoded_voice_data'
+        let voiceBase64 = null  // 改为 null，如果没有音频就不设置
         let imageBase64 = null
 
         // 处理音频文件
         if (uploadData.voiceFile) {
           try {
-            console.log('开始转换音频文件...')
             voiceBase64 = await this.fileToBase64(uploadData.voiceFile)
-            console.log('音频转换完成，长度:', voiceBase64.length)
           } catch (error) {
             console.error('音频转base64错误:', error)
+            voiceBase64 = null  // 转换失败也设为 null
           }
-        } else {
-          console.log('未找到音频文件')
+        } else if (uploadData.originalVoicePrompt) {
+          // 编辑模式：使用原始音频
+          voiceBase64 = uploadData.originalVoicePrompt
         }
 
         // 处理图片文件
-        if (uploadData.imageUrl) {
+        if (uploadData.imageUrl && uploadData.imageFile) {
           try {
-            console.log('开始转换图片...')
             imageBase64 = await this.imageUrlToBase64(uploadData.imageUrl)
-            console.log('图片转换完成，长度:', imageBase64.length)
           } catch (error) {
             console.error('图片转base64错误:', error)
           }
-        } else {
-          console.log('未找到图片文件')
+        } else if (uploadData.originalImageData) {
+          // 编辑模式：使用原始图片
+          imageBase64 = uploadData.originalImageData
+        } else if (uploadData.imageUrl) {
+          // 可能是编辑模式下显示的原始图片URL
+          try {
+            imageBase64 = await this.imageUrlToBase64(uploadData.imageUrl)
+          } catch (error) {
+            console.error('图片转base64错误:', error)
+          }
         }
+
+        // 获取语音参考文本（优先使用新输入的，其次使用原始的）
+        const voiceReferenceText = uploadData.voiceReferenceText || uploadData.originalVoiceReferenceText || '从前，庄周梦见自己变成了蝴蝶，一只翩翩起舞的蝴蝶。他十分惬意舒畅，悠然自得，根本不知道自己原本是庄周。突然梦醒，他才惊觉自己分明是庄周。可他却疑惑起来，不知是庄周做梦变成了蝴蝶呢，还是蝴蝶做梦变成了庄周？'
 
         // 生成符合标准的.mind文件内容
         const mindData = {
@@ -155,6 +170,7 @@ export default {
             email: uploadData.email || '',
             personality_prompt: `你现在是${uploadData.name}的数字意识体。${uploadData.personality || '你应该根据用户的上传内容,准确模拟其性格、说话方式和思维模式。'}`,
             voice_prompt: voiceBase64,
+            voice_reference_text: voiceReferenceText,  // 语音参考文本（用于语音克隆）
             image_data: imageBase64,
             physical_info: {
               height: uploadData.height || null,
@@ -171,7 +187,7 @@ export default {
           memory: {
             self_cognition: uploadData.self_cognition || "这是我的数字意识存在",
             memory_fragments: uploadData.memories || [],
-            knowledge_base: `https://api.upme.cool/${uploadData.name}_knowledge`
+            knowledge_base: `${__API_BASE_URL__}/${uploadData.name}_knowledge`
           },
           status: {
             current_time: new Date().toISOString(),
@@ -193,60 +209,65 @@ export default {
         })
 
         // 转换为格式化的字符串
-        const fileContent = `export default ${JSON.stringify(mindData, null, 2)}`
-        
+        this.fileContent = `export default ${JSON.stringify(mindData, null, 2)}`
+
         // 生成文件名（与后端保持一致）
-        const fileName = `${uploadData.name}.mind`
-        
-        // === 新增：保存到后端 ===
-        const { post } = await import('@/utils/request.js')
+        this.fileName = `${uploadData.name}.mind`
+
+        // 保存数据供下载使用
+        this.mindData = mindData
+
+        // === 保存到后端 ===
+        const { post, put } = await import('@/utils/request.js')
         try {
-          const response = await post('/api/mind', {
-            name: uploadData.name,
-            birth: uploadData.birth,
-            mind_content: fileContent
-          })
+          let response
+
+          if (uploadData.isEditMode && uploadData.mindId) {
+            // 编辑模式：调用更新接口
+            response = await put(`/api/mind/${uploadData.mindId}`, {
+              name: uploadData.name,
+              birth: uploadData.birth,
+              mind_content: this.fileContent
+            })
+          } else {
+            // 创建模式：调用创建接口
+            response = await post('/api/mind', {
+              name: uploadData.name,
+              birth: uploadData.birth,
+              mind_content: this.fileContent
+            })
+          }
 
           if (response && response.data && response.data.code === 200) {
-            console.log('Mind文件已保存到后端', response.data.data)
+            this.isSaved = true  // 标记为已保存
+
+            // 清除编辑模式标记（注意：要在判断之前保存状态）
+            const wasEditMode = uploadData.isEditMode
+            if (wasEditMode) {
+              delete uploadData.isEditMode
+              delete uploadData.mindId
+              delete uploadData.originalVoicePrompt
+              delete uploadData.originalVoiceReferenceText
+              delete uploadData.originalImageData
+            }
+
+            uni.hideLoading()
+            uni.showToast({
+              title: wasEditMode ? '意识体已更新' : '意识体文件已生成',
+              icon: 'success',
+              duration: 2000
+            })
           } else {
+            console.error('后端返回失败:', response?.data)
             uni.showToast({ title: '后端保存失败', icon: 'none' })
             throw new Error('保存失败')
           }
         } catch (error) {
           console.error('保存到后端失败:', error)
-          uni.showToast({ title: '后端保存失败', icon: 'none' })
+          uni.hideLoading()
+          uni.showToast({ title: '保存失败，请重试', icon: 'none' })
           throw error
         }
-        // === 新增结束 ===
-
-        // 创建Blob对象
-        const blob = new Blob([fileContent], { type: 'application/javascript' })
-        const url = URL.createObjectURL(blob)
-        
-        // 创建下载链接
-        const link = document.createElement('a')
-        link.href = url
-        link.download = fileName
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
-
-        // 保存成功后的处理
-        uni.hideLoading()
-        uni.showToast({
-          title: '意识体文件生成成功',
-          icon: 'success',
-          duration: 2000
-        })
-
-        // 延迟跳转到意识体操作台
-        setTimeout(() => {
-          uni.redirectTo({
-            url: '/pages/welcome/explore'
-          })
-        }, 2000)
 
       } catch (err) {
         console.error('生成意识体文件错误:', err)
@@ -258,10 +279,56 @@ export default {
         })
       }
     },
-    
+
+    // 下载mind文件到本地
+    downloadMindCopy() {
+      if (!this.isSaved || !this.fileContent || !this.fileName) {
+        uni.showToast({
+          title: '文件尚未生成，请稍候',
+          icon: 'none'
+        })
+        return
+      }
+
+      try {
+        // 创建Blob对象
+        const blob = new Blob([this.fileContent], { type: 'application/javascript' })
+        const url = URL.createObjectURL(blob)
+
+        // 创建下载链接
+        const link = document.createElement('a')
+        link.href = url
+        link.download = this.fileName
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+
+        uni.showToast({
+          title: '文件下载成功',
+          icon: 'success'
+        })
+      } catch (error) {
+        console.error('下载文件错误:', error)
+        uni.showToast({
+          title: '下载失败',
+          icon: 'none'
+        })
+      }
+    },
+
+    // 进入意识体操作台
     goToConsole() {
-      uni.navigateTo({
-        url: '/pages/consciousness/index'
+      if (!this.isSaved) {
+        uni.showToast({
+          title: '文件尚未保存，请稍候',
+          icon: 'none'
+        })
+        return
+      }
+
+      uni.redirectTo({
+        url: '/pages/welcome/explore'
       })
     }
   }

@@ -29,3 +29,10 @@ class ListMindParams(BaseModel):
     user_id: Optional[str] = Field(None, description="用户ID")
     page: int = Field(1, ge=1, description="页码")
     page_size: int = Field(10, ge=1, le=100, description="每页数量")
+
+
+class UpdateMindParams(BaseModel):
+    """更新意识体参数"""
+    name: Optional[str] = Field(None, min_length=1, max_length=100, description="意识体名称")
+    birth: Optional[str] = Field(None, description="生日")
+    mind_content: Optional[str] = Field(None, description="意识体内容")
